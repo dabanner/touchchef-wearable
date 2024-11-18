@@ -28,12 +28,17 @@ import com.touchchef.wearable.R
 import com.touchchef.wearable.presentation.theme.TouchChefTheme
 
 class MainActivity : ComponentActivity() {
+    private val webSocketClient = WebSocketClient()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
 
         super.onCreate(savedInstanceState)
 
         setTheme(android.R.style.Theme_DeviceDefault)
+
+        webSocketClient.connect("wss://localhost:8080")
+        webSocketClient.sendMessage("LALALALALLALALLALALAL")
 
         setContent {
             WearApp("Android")
