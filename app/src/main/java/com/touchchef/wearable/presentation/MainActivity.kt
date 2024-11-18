@@ -37,8 +37,7 @@ class MainActivity : ComponentActivity() {
 
         setTheme(android.R.style.Theme_DeviceDefault)
 
-        webSocketClient.connect("wss://localhost:8080")
-        webSocketClient.sendMessage("LALALALALLALALLALALAL")
+        webSocketClient.connect()
 
         setContent {
             WearApp("Android")
