@@ -1,5 +1,6 @@
 [versions]
 agp = "8.6.0"
+datastorePreferences = "1.1.1"
 kotlin = "1.9.0"
 okhttp = "4.12.0"
 playServicesWearable = "18.0.0"
@@ -9,8 +10,11 @@ composeFoundation = "1.2.1"
 wearToolingPreview = "1.0.0"
 activityCompose = "1.8.0"
 coreSplashscreen = "1.0.1"
+zxing = "3.5.2"
 
 [libraries]
+datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
+zxing = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }

@@ -8,7 +8,7 @@ class WebSocketClient {
 
     fun connect() {
         val request = Request.Builder()
-            .url("ws://10.0.2.2:8080")  // Use correct IP
+            .url("ws://10.192.42.141:8080")  // Use correct IP, for localhost : ws://localhost:8080
             .build()
 
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
