@@ -1,12 +1,13 @@
 package com.touchchef.wearable.presentation
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.Color
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import android.os.Build
 import android.provider.Settings
-import com.touchchef.wearable.DevicePreferences
+import com.touchchef.wearable.data.DevicePreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -55,6 +56,7 @@ class QRCodeGenerator {
         return bitmap
     }
 
+    @SuppressLint("HardwareIds")
     private fun getUniqueDeviceIdentifier(context: android.content.Context): String {
         val deviceModel = Build.MODEL
         val androidId = Settings.Secure.getString(
@@ -62,13 +64,5 @@ class QRCodeGenerator {
             Settings.Secure.ANDROID_ID
         )
         return "$deviceModel-$androidId"
-    }
-
-    // Méthode pour accéder au deviceId depuis d'autres classes
-    suspend fun getDeviceId(context: android.content.Context): String {
-        return cachedDeviceId ?: devicePreferences?.deviceId?.first() ?: getUniqueDeviceIdentifier(context).also { newId ->
-            devicePreferences?.saveDeviceId(newId)
-            cachedDeviceId = newId
-        }
     }
 }

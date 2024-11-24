@@ -49,6 +49,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.navigation.compose)
+    implementation(libs.gson)
     implementation(libs.zxing)
     implementation(libs.datastore.preferences)
     implementation(libs.play.services.wearable)
