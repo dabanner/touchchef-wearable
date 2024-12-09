@@ -30,9 +30,9 @@ import kotlinx.coroutines.flow.first
 fun WebSocketQRCode(
     webSocketClient: WebSocketClient,
     context: android.content.Context,
+    qrCodeGenerator: QRCodeGenerator,
     navigateToConfirmationScreen: (String, String, String) -> Unit // Cette fonction permet de naviguer vers l'écran de confirmation
 ) {
-    val qrCodeGenerator = QRCodeGenerator()
     val isConnected = remember { mutableStateOf(false) }
     val errorMessage = remember { mutableStateOf<String?>(null) }
     val gson = Gson()
