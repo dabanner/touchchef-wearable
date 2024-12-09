@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 import com.google.gson.Gson
 
 class WebSocketClient {
-    private val serverUrl = "ws://websocket.chhilif.com:8080"
+    private val serverUrl = "ws://websocket.chhilif.com/ws"
     private var webSocket: WebSocket? = null
     private val gson = Gson()
     var isConnected = false
