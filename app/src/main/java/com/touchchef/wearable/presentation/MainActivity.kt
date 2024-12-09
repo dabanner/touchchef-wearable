@@ -25,17 +25,22 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     private val webSocketClient = WebSocketClient()
     private lateinit var bpmService: BpmService
+    private lateinit var qrCodeGenerator: QRCodeGenerator;
 
     private val BODY_SENSOR_PERMISSION_CODE = 100
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
+        qrCodeGenerator = QRCodeGenerator()
+        qrCodeGenerator.initialize(baseContext)
         super.onCreate(savedInstanceState)
         requestSensorPermission()
         // Initialize BPM service
         bpmService = BpmService(
             webSocketClient,
-            getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            getSystemService(Context.SENSOR_SERVICE) as SensorManager,
+            baseContext
         )
 
         // Start monitoring BPM
@@ -51,7 +56,9 @@ class MainActivity : ComponentActivity() {
                     WebSocketQRCode(
                         webSocketClient = webSocketClient,
                         context = baseContext,
+                        qrCodeGenerator,
                         navigateToConfirmationScreen = { name, avatar, deviceId ->
+
                             Log.d("MainActivity", "Navigating to confirmation screen")
                             runOnUiThread {
                                 navController.navigate("confirmationScreen/$name/$avatar/$deviceId")
@@ -107,7 +114,7 @@ class MainActivity : ComponentActivity() {
             Log.d("MainActivity", "Heart rate sensor found: ${heartRateSensor.name}")
         }
 
-        bpmService = BpmService(webSocketClient, sensorManager)
+        bpmService = BpmService(webSocketClient, sensorManager, baseContext)
         bpmService.startMonitoring()
 
         // Add a coroutine to monitor BPM values

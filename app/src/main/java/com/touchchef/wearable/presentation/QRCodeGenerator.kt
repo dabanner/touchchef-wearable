@@ -65,4 +65,7 @@ class QRCodeGenerator {
         )
         return "$deviceModel-$androidId"
     }
+    public fun getCachedDeviceId():String {
+        return cachedDeviceId.orEmpty()
+    }
 }
