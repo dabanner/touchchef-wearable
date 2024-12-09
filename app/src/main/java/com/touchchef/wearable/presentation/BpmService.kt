@@ -1,0 +1,101 @@
+package com.touchchef.wearable.presentation
+
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+
+data class BpmMessage(
+    val bpm: Int,
+    val timestamp: Long
+)
+
+class BpmService(
+    private val webSocketClient: WebSocketClient,
+    private val sensorManager: SensorManager
+) : SensorEventListener {
+    private var monitoringJob: Job? = null
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+
+    private val _bpmFlow = MutableStateFlow<Int?>(null)
+    val bpmFlow: StateFlow<Int?> = _bpmFlow
+
+    private val heartRateSensor: Sensor? by lazy {
+        sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
+    }
+
+    fun stopMonitoring() {
+        monitoringJob?.cancel()
+        monitoringJob = null
+        sensorManager.unregisterListener(this)
+        _bpmFlow.value = null
+    }
+    fun startMonitoring() {
+        val sensor = heartRateSensor
+        if (sensor == null) {
+            Log.e("BpmService", "Heart rate sensor not found")
+            return
+        }
+
+        Log.d("BpmService", "Starting heart rate monitoring with sensor: ${sensor.name}")
+
+        val registered = sensorManager.registerListener(
+            this,
+            sensor,
+            SensorManager.SENSOR_DELAY_NORMAL
+        )
+
+        if (!registered) {
+            Log.e("BpmService", "Failed to register sensor listener")
+            return
+        }
+
+        Log.d("BpmService", "Successfully registered sensor listener")
+
+        // Start periodic sending of BPM data
+        monitoringJob = coroutineScope.launch {
+            while (isActive) {
+                _bpmFlow.value?.let { bpm ->
+                    Log.d("BpmService", "Preparing to send BPM: $bpm")
+                    val bpmMessage = mapOf(
+                        "bpm" to bpm,
+                        "timestamp" to System.currentTimeMillis()
+                    )
+
+                    webSocketClient.sendJson(bpmMessage) { success ->
+                        if (success) {
+                            Log.d("BpmService", "Successfully sent BPM: $bpm")
+                        } else {
+                            Log.e("BpmService", "Failed to send BPM data")
+                        }
+                    }
+                }
+                delay(1000)
+            }
+        }
+    }
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
+            val bpm = event.values[0].toInt()
+            Log.d("BpmService", "Raw sensor reading: ${event.values[0]}")
+            Log.d("BpmService", "Converted BPM: $bpm")
+            _bpmFlow.value = bpm
+        } else {
+            Log.d("BpmService", "Received sensor event from unexpected sensor: ${event?.sensor?.name}")
+        }
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        Log.d("BpmService", "Sensor accuracy changed: $accuracy for sensor: ${sensor?.name}")
+    }
+}
