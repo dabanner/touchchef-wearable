@@ -18,11 +18,16 @@ class WebSocketClient {
         .readTimeout(0, TimeUnit.MILLISECONDS)
         .build()
 
+    private var onTaskMessageReceived: ((Map<String, Any>) -> Unit)? = null
+
     fun connect(
         onConnected: () -> Unit,
         onMessage: (String) -> Unit,
-        onError: (String) -> Unit
+        onError: (String) -> Unit,
+        onTaskMessage: ((Map<String, Any>) -> Unit)? = null
     ) {
+        this.onTaskMessageReceived = onTaskMessage
+
         val request = Request.Builder().url(serverUrl).build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
@@ -31,7 +36,18 @@ class WebSocketClient {
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
-                onMessage(text)
+                try {
+                    val message = gson.fromJson(text, Map::class.java) as Map<String, Any>
+                    when (message["type"] as? String) {
+                        "help_request", "task_notification", "task_acceptance" -> {
+                            onTaskMessageReceived?.invoke(message)
+                        }
+                        else -> onMessage(text)
+                    }
+                } catch (e: Exception) {
+                    Log.e("WebSocketClient", "Error parsing message", e)
+                    onMessage(text)
+                }
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {

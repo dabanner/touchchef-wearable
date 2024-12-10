@@ -25,7 +25,8 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     private val webSocketClient = WebSocketClient()
     private lateinit var bpmService: BpmService
-    private lateinit var qrCodeGenerator: QRCodeGenerator;
+    private lateinit var qrCodeGenerator: QRCodeGenerator
+    private lateinit var taskHelpService: TaskHelpService
 
     private val BODY_SENSOR_PERMISSION_CODE = 100
 
@@ -35,23 +36,17 @@ class MainActivity : ComponentActivity() {
         qrCodeGenerator = QRCodeGenerator()
         qrCodeGenerator.initialize(baseContext)
         super.onCreate(savedInstanceState)
-        requestSensorPermission()
-        // Initialize BPM service
-        bpmService = BpmService(
-            webSocketClient,
-            getSystemService(Context.SENSOR_SERVICE) as SensorManager,
-            baseContext
-        )
 
-        // Start monitoring BPM
-        bpmService.startMonitoring()
+        requestSensorPermission()
+
+        initializeServices()
 
         setTheme(android.R.style.Theme_DeviceDefault)
 
         setContent {
             val navController = rememberNavController()
 
-            NavHost(navController = navController, startDestination = "qrcodeScreen") {
+            NavHost(navController = navController, startDestination = "taskScreen/test-device") {
                 composable("qrcodeScreen") {
                     WebSocketQRCode(
                         webSocketClient = webSocketClient,
@@ -77,8 +72,49 @@ class MainActivity : ComponentActivity() {
                         avatar = it.arguments?.getString("avatar") ?: "default_avatar.png"
                     )
                 }
+
+                composable("taskScreen/{deviceId}") {
+                    val deviceId = it.arguments?.getString("deviceId") ?: "null"
+                    TaskScreen(
+                        taskHelpService = taskHelpService,
+                        deviceId = deviceId
+                    )
+                }
             }
         }
+    }
+
+    private fun initializeServices() {
+        val deviceId = qrCodeGenerator.getCachedDeviceId()
+
+        // Initialize BPM service
+        bpmService = BpmService(
+            webSocketClient,
+            getSystemService(Context.SENSOR_SERVICE) as SensorManager,
+            baseContext
+        )
+
+        // Initialize TaskHelp service
+        taskHelpService = TaskHelpService(webSocketClient, deviceId)
+
+        // Configure WebSocket message handling
+        webSocketClient.connect(
+            onConnected = {
+                Log.d("MainActivity", "Connected to WebSocket")
+            },
+            onMessage = { message ->
+                Log.d("MainActivity", "Received message: $message")
+            },
+            onError = { error ->
+                Log.e("MainActivity", "WebSocket error: $error")
+            },
+            onTaskMessage = { taskMessage ->
+                Log.d("MainActivity", "Received task message: $taskMessage")
+            }
+        )
+
+        // Start monitoring BPM
+        bpmService.startMonitoring()
     }
 
     private fun requestSensorPermission() {
