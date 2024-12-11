@@ -49,11 +49,6 @@ class MainActivity : ComponentActivity() {
         setTheme(android.R.style.Theme_DeviceDefault)
 
         setContent {
-            CallStyleTimer(
-                onAccept = { /* Handle accept action */ },
-                onRefuse = { /* Handle refuse action */ }
-            )
-            /*
             val navController = rememberNavController()
 
             NavHost(navController = navController, startDestination = "qrcodeScreen") {
@@ -84,7 +79,6 @@ class MainActivity : ComponentActivity() {
                 }
 
             }
-             */
         }
     }
 
