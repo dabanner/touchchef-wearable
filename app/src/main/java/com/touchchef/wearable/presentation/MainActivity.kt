@@ -13,8 +13,10 @@ import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.remember
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
@@ -32,6 +34,7 @@ class MainActivity : ComponentActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         installSplashScreen()
         qrCodeGenerator = QRCodeGenerator()
         qrCodeGenerator.initialize(baseContext)
@@ -52,7 +55,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             // Initialize the detector
-            handRaiseDetector = HandRaiseDetector(this)
+            handRaiseDetector = HandRaiseDetector(this, webSocketClient)
 
             // Start detection
             handRaiseDetector.startDetecting()
@@ -81,6 +84,21 @@ class MainActivity : ComponentActivity() {
                         deviceId = it.arguments?.getString("deviceId") ?: "null",
                         name = it.arguments?.getString("name") ?: "Inconnu",
                         avatar = it.arguments?.getString("avatar") ?: "default_avatar.png"
+                    )
+                }
+
+                // Add this to your NavHost
+                composable("gameScreen") {
+                    val gameViewModel = remember { GameViewModel(webSocketClient) }
+                    GameScreen(
+                        webSocketClient = webSocketClient,
+                        tasks = gameViewModel.tasks,
+                        currentTaskIndex = gameViewModel.currentTaskIndex,
+                        onGameComplete = {
+                            navController.navigate("qrcodeScreen") {
+                                popUpTo("qrcodeScreen") { inclusive = true }
+                            }
+                        }
                     )
                 }
             }
@@ -155,5 +173,6 @@ class MainActivity : ComponentActivity() {
             bpmService.stopMonitoring()
         }
         handRaiseDetector.stopDetecting()
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 }
