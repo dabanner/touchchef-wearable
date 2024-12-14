@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Text
 import com.google.gson.Gson
 import com.touchchef.wearable.R
@@ -34,7 +35,8 @@ fun ConfirmationScreen(
     webSocketClient: WebSocketClient,
     deviceId: String,
     name: String,
-    avatar: String
+    avatar: String,
+    onConfirmation: () -> Unit
 ) {
     val bricolageGrotesque = FontFamily(
         Font(R.font.bricolagegrotesque_medium, FontWeight.Normal),
@@ -125,5 +127,8 @@ fun ConfirmationScreen(
             }
         }
 
+    }
+    Button(onClick = onConfirmation) {
+        Text("Confirmer")
     }
 }

@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var bpmService: BpmService
     private lateinit var qrCodeGenerator: QRCodeGenerator
     private lateinit var taskHelpService: TaskHelpService
+    private lateinit var cookManagementService: CookManagementService
 
     private val BODY_SENSOR_PERMISSION_CODE = 100
 
@@ -46,7 +47,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
 
-            NavHost(navController = navController, startDestination = "taskScreen/test-device") {
+            NavHost(navController = navController, startDestination = "qrcodeScreen") {
                 composable("qrcodeScreen") {
                     WebSocketQRCode(
                         webSocketClient = webSocketClient,
@@ -69,7 +70,13 @@ class MainActivity : ComponentActivity() {
                         webSocketClient = webSocketClient,
                         deviceId = it.arguments?.getString("deviceId") ?: "null",
                         name = it.arguments?.getString("name") ?: "Inconnu",
-                        avatar = it.arguments?.getString("avatar") ?: "default_avatar.png"
+                        avatar = it.arguments?.getString("avatar") ?: "default_avatar.png",
+                        onConfirmation = {
+                            navController.navigate("taskScreen/$deviceId") {
+                                // Optional: Clear the back stack so user can't go back to QR/confirmation screens
+                                popUpTo("qrcodeScreen") { inclusive = true }
+                            }
+                        }
                     )
                 }
 
@@ -77,6 +84,7 @@ class MainActivity : ComponentActivity() {
                     val deviceId = it.arguments?.getString("deviceId") ?: "null"
                     TaskScreen(
                         taskHelpService = taskHelpService,
+                        cookManagementService=cookManagementService,
                         deviceId = deviceId
                     )
                 }
@@ -86,6 +94,8 @@ class MainActivity : ComponentActivity() {
 
     private fun initializeServices() {
         val deviceId = qrCodeGenerator.getCachedDeviceId()
+
+        cookManagementService = CookManagementService(webSocketClient, deviceId)
 
         // Initialize BPM service
         bpmService = BpmService(
