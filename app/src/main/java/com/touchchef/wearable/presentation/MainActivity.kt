@@ -96,7 +96,7 @@ class MainActivity : ComponentActivity() {
 
                 // Add this to your NavHost
                 composable("gameScreen") {
-                    val gameViewModel = remember { GameViewModel(webSocketClient) }
+                    val gameViewModel = remember { GameViewModel(webSocketClient, baseContext) }
                     GameScreen(
                         webSocketClient = webSocketClient,
                         tasks = gameViewModel.tasks,

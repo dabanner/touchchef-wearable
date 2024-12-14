@@ -2,7 +2,6 @@ package com.touchchef.wearable.presentation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.Box
-import com.touchchef.wearable.data.Task
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -57,7 +56,7 @@ fun GameScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF87CEEB)),
+                .background(parseColor(currentTask.cook.color)),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -71,28 +70,28 @@ fun GameScreen(
                     style = TextStyle(fontSize = 16.sp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    when (currentTask.type) {
-                        "COUPER" -> {
-                            Text("🍅", fontSize = 24.sp)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("🔪", fontSize = 24.sp)
-                        }
-                        // Add other task types here
-                    }
-                }
+                Text(
+                    text = currentTask.taskName,
+                    color = Color.White,
+                    style = TextStyle(fontSize = 14.sp),
+                    textAlign = TextAlign.Center
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "${currentTask.type} ${currentTask.quantity}x 🍅",
+                    text = "Chef: ${currentTask.cook.name}",
                     color = Color.White,
-                    style = TextStyle(fontSize = 14.sp)
+                    style = TextStyle(fontSize = 12.sp)
                 )
-                // Add timer here if needed
             }
         }
     }
 }
 
+// Helper function to parse color
+fun parseColor(colorString: String): Color {
+    return try {
+        Color(android.graphics.Color.parseColor(colorString))
+    } catch (e: Exception) {
+        Color(0xFF87CEEB) // Default color if parsing fails
+    }
+}

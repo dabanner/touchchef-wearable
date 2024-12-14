@@ -9,14 +9,11 @@ import okhttp3.WebSocketListener
 import java.util.concurrent.TimeUnit
 import com.google.gson.Gson
 
-// First, create these data classes for message handling
 data class WebSocketMessage(
+    val from: String,
+    val to: String,
     val type: String,
-    val tasks: List<TaskData>? = null,
-    // Add other fields that might come from the server
-    val deviceId: String? = null,
-    val name: String? = null,
-    val avatar: String? = null
+    val assignedTask: AssignedTask? = null
 )
 
 data class TaskData(

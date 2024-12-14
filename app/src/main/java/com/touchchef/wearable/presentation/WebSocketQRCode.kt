@@ -65,9 +65,10 @@ fun WebSocketQRCode(
                 // Désérialisation du message
                 val response = gson.fromJson(message, Map::class.java)
                 val to = response["to"] as? String
+                val type = response["type"] as? String
 
                 // Vérification si le `to` correspond à notre `deviceId`
-                if (to == cachedDeviceId) {
+                if (to == cachedDeviceId && type == "addCook") {
                     // On reçoit les infos du cuisinier
                     val name = response["name"] as? String ?: "Inconnu"
                     val avatar = response["avatar"] as? String ?: "a.png"
