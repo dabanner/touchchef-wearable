@@ -9,6 +9,22 @@ import okhttp3.WebSocketListener
 import java.util.concurrent.TimeUnit
 import com.google.gson.Gson
 
+// First, create these data classes for message handling
+data class WebSocketMessage(
+    val type: String,
+    val tasks: List<TaskData>? = null,
+    // Add other fields that might come from the server
+    val deviceId: String? = null,
+    val name: String? = null,
+    val avatar: String? = null
+)
+
+data class TaskData(
+    val type: String,
+    val quantity: Int
+)
+
+// Updated WebSocketClient
 class WebSocketClient {
     private val serverUrl = "ws://websocket.chhilif.com/ws"
     private var webSocket: WebSocket? = null
@@ -17,6 +33,17 @@ class WebSocketClient {
     private val client = OkHttpClient.Builder()
         .readTimeout(0, TimeUnit.MILLISECONDS)
         .build()
+
+    // Add a list of message listeners
+    private val messageListeners = mutableListOf<(WebSocketMessage) -> Unit>()
+
+    fun addMessageListener(listener: (WebSocketMessage) -> Unit) {
+        messageListeners.add(listener)
+    }
+
+    fun removeMessageListener(listener: (WebSocketMessage) -> Unit) {
+        messageListeners.remove(listener)
+    }
 
     fun connect(
         onConnected: () -> Unit,
@@ -32,6 +59,15 @@ class WebSocketClient {
 
             override fun onMessage(webSocket: WebSocket, text: String) {
                 onMessage(text)
+                // Parse the message and notify listeners
+                try {
+                    val message = gson.fromJson(text, WebSocketMessage::class.java)
+                    messageListeners.forEach { listener ->
+                        listener(message)
+                    }
+                } catch (e: Exception) {
+                    Log.e("WebSocket", "Error parsing message: $text", e)
+                }
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
@@ -63,5 +99,11 @@ class WebSocketClient {
         } else {
             onResult(false)
         }
+    }
+
+    // Add cleanup method
+    fun disconnect() {
+        webSocket?.close(1000, "Normal closure")
+        messageListeners.clear()
     }
 }

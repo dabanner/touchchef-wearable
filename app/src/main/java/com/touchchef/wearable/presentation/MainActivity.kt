@@ -83,7 +83,14 @@ class MainActivity : ComponentActivity() {
                         webSocketClient = webSocketClient,
                         deviceId = it.arguments?.getString("deviceId") ?: "null",
                         name = it.arguments?.getString("name") ?: "Inconnu",
-                        avatar = it.arguments?.getString("avatar") ?: "default_avatar.png"
+                        avatar = it.arguments?.getString("avatar") ?: "default_avatar.png",
+                        navigateToGameScreen = {
+                            Log.d("MainActivity", "Navigating to confirmation screen")
+                            runOnUiThread {
+                                navController.navigate("gameScreen")
+                            }
+
+                        }
                     )
                 }
 

@@ -30,4 +30,10 @@ class GameViewModel(private val webSocketClient: WebSocketClient) : ViewModel() 
             }
         }
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        // Clean up the listener when ViewModel is cleared
+        webSocketClient.removeMessageListener { /* reference to the same listener */ }
+    }
 }
