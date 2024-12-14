@@ -43,6 +43,12 @@ class GameViewModel(
     private val _currentTaskIndex = mutableStateOf(0)
     val currentTaskIndex: Int get() = _currentTaskIndex.value
 
+    fun onTaskChange(newIndex: Int) {
+        if (newIndex in 0 until _tasks.size) {
+            _currentTaskIndex.value = newIndex
+        }
+    }
+
 
     init {
         viewModelScope.launch {

@@ -101,10 +101,8 @@ class MainActivity : ComponentActivity() {
                         webSocketClient = webSocketClient,
                         tasks = gameViewModel.tasks,
                         currentTaskIndex = gameViewModel.currentTaskIndex,
-                        onGameComplete = {
-                            navController.navigate("qrcodeScreen") {
-                                popUpTo("qrcodeScreen") { inclusive = true }
-                            }
+                            onTaskChange= {newIndex ->
+                                gameViewModel.onTaskChange(newIndex)
                         }
                     )
                 }

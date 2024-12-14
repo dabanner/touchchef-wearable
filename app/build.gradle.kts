@@ -68,4 +68,6 @@ dependencies {
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
     implementation(libs.okhttp)
+    implementation(libs.compose.material.v140)
+    implementation(libs.compose.foundation.v140)
 }
