@@ -322,4 +322,44 @@ class TaskHelpService(
         status = TaskRequestStatus.PENDING,
         timestamp = (message["timestamp"] as Number).toLong()
     )
+
+    fun cancelTask(taskId: String, helpRequest: TaskHelpRequest) {
+        val cancelMessage = mapOf(
+            "type" to "task_cancelled",
+            "taskId" to taskId,
+            "from" to deviceId,
+            "to" to if (helpRequest.from == deviceId) helpRequest.to else helpRequest.from,
+            "message" to "Aide annulée pour la tâche #$taskId",
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        webSocketClient.sendJson(cancelMessage) { success ->
+            if (success) {
+                clearRequest(taskId)
+                Log.d(TAG, "Task cancellation sent for task #$taskId")
+            } else {
+                Log.e(TAG, "Failed to send task cancellation for task #$taskId")
+            }
+        }
+    }
+
+    fun completeTask(taskId: String, helpRequest: TaskHelpRequest) {
+        val completeMessage = mapOf(
+            "type" to "task_completed",
+            "taskId" to taskId,
+            "from" to deviceId,
+            "to" to if (helpRequest.from == deviceId) helpRequest.to else helpRequest.from,
+            "message" to "Tâche #$taskId terminée",
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        webSocketClient.sendJson(completeMessage) { success ->
+            if (success) {
+                clearRequest(taskId)
+                Log.d(TAG, "Task completion sent for task #$taskId")
+            } else {
+                Log.e(TAG, "Failed to send task completion for task #$taskId")
+            }
+        }
+    }
 }

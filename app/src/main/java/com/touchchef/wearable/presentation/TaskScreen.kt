@@ -56,11 +56,15 @@ fun TaskScreen(
     ) {
         // Active Task Section
         item {
-            ActiveTaskSection(
-                helpRequest = activeRequest,
-                cooks = cooks,
-                currentDeviceId = deviceId
-            )
+            activeRequest?.let { request ->
+                ActiveTaskSection(
+                    helpRequest = request,
+                    cooks = cooks,
+                    currentDeviceId = deviceId,
+                    onCancelTask = { taskHelpService.cancelTask(request.taskId, request) },
+                    onCompleteTask = { taskHelpService.completeTask(request.taskId, request) }
+                )
+            }
         }
 
         // Pending Requests Section
@@ -114,28 +118,25 @@ fun TaskScreen(
 
 @Composable
 private fun ActiveTaskSection(
-    helpRequest: TaskHelpRequest?,
+    helpRequest: TaskHelpRequest,
     cooks: List<Cook>,
-    currentDeviceId: String
+    currentDeviceId: String,
+    onCancelTask: () -> Unit,
+    onCompleteTask: () -> Unit
 ) {
-    Log.d("Active Task Section", "Cooks list: $cooks")
-    Log.d("Active Task Section", "Help request: $helpRequest")
-    Log.d("Active Task Section", "Current device ID: $currentDeviceId")
+    var showTaskActionsDialog by remember { mutableStateOf(false) }
 
-    if (helpRequest?.status == TaskRequestStatus.ACCEPTED) {
-        // Determine which cook to show based on whether we're the sender or receiver
+    if (helpRequest.status == TaskRequestStatus.ACCEPTED) {
         val otherCookId = if (helpRequest.from == currentDeviceId) {
-            helpRequest.to    // We're the sender, show the helper
+            helpRequest.to
         } else {
-            helpRequest.from  // We're the receiver, show the requester
+            helpRequest.from
         }
 
         val otherCook = cooks.find { it.deviceId == otherCookId }
-        Log.d("Active Task Section", "Looking for cook with deviceId: $otherCookId")
-        Log.d("Active Task Section", "Found cook: $otherCook")
 
         Card(
-            onClick = {},
+            onClick = { showTaskActionsDialog = true },
             modifier = Modifier.width(140.dp),
             backgroundPainter = CardDefaults.cardBackgroundPainter(
                 startBackgroundColor = Color(0xFF525952),
@@ -179,9 +180,82 @@ private fun ActiveTaskSection(
                 )
             }
         }
+
+        if (showTaskActionsDialog) {
+            TaskActionsDialog(
+                onDismiss = { showTaskActionsDialog = false },
+                onCancel = {
+                    onCancelTask()
+                    showTaskActionsDialog = false
+                },
+                onComplete = {
+                    onCompleteTask()
+                    showTaskActionsDialog = false
+                }
+            )
+        }
     }
 }
 
+@Composable
+private fun TaskActionsDialog(
+    onDismiss: () -> Unit,
+    onCancel: () -> Unit,
+    onComplete: () -> Unit
+) {
+    Dialog(
+        showDialog = true,
+        onDismissRequest = onDismiss
+    ) {
+        Card(
+            onClick = {},
+            modifier = Modifier.padding(horizontal = 16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Actions",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+
+                Button(
+                    onClick = onComplete,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF8BC34A))
+                ) {
+                    Text("Terminer la tâche", fontSize = 12.sp)
+                }
+
+                Button(
+                    onClick = onCancel,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFE91E1E))
+                ) {
+                    Text("Annuler l'aide", fontSize = 12.sp)
+                }
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF424242))
+                ) {
+                    Text("Retour", fontSize = 12.sp)
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun PendingRequestsSection(
