@@ -19,7 +19,9 @@ import androidx.wear.compose.material.dialog.Dialog
 fun TaskScreen(
     taskHelpService: TaskHelpService,
     cookManagementService: CookManagementService,
-    deviceId: String
+    deviceId: String,
+    taskName: String,
+    onBack: () -> Unit
 ) {
     val activeRequest by taskHelpService.activeRequestFlow.collectAsState()
     val allPendingRequests by taskHelpService.pendingRequestsFlow.collectAsState()
@@ -80,7 +82,8 @@ fun TaskScreen(
         item {
             ActionButtonsSection(
                 onSpecificHelpClick = { showCookSelectionDialog = true },
-                onGeneralHelpClick = { taskHelpService.notifyAllParticipants("123") }
+                onGeneralHelpClick = { taskHelpService.notifyAllParticipants(taskName) },
+                onBack = onBack
             )
         }
 
@@ -95,7 +98,7 @@ fun TaskScreen(
             cooks = cooks.filter { it.deviceId != deviceId },
             onDismiss = { showCookSelectionDialog = false },
             onCookSelected = { cook ->
-                taskHelpService.requestHelp("123", cook.deviceId)
+                taskHelpService.requestHelp(taskName, cook.deviceId)
                 showCookSelectionDialog = false
             }
         )
@@ -325,7 +328,8 @@ private fun PendingRequestsSection(
 @Composable
 private fun ActionButtonsSection(
     onSpecificHelpClick: () -> Unit,
-    onGeneralHelpClick: () -> Unit
+    onGeneralHelpClick: () -> Unit,
+    onBack: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -344,6 +348,33 @@ private fun ActionButtonsSection(
             modifier = Modifier.width(120.dp),
             colors = ChipDefaults.chipColors(backgroundColor = Color(0xFFE3F6FF))
         )
+
+        Button(
+            onClick = onBack,
+            modifier = Modifier
+                .width(120.dp)
+                .height(32.dp),
+            colors = ButtonDefaults.buttonColors(
+                backgroundColor = Color(0x4FFFFFFF)
+            )
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Retour",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF000000)
+                )
+                Text(
+                    text = "⬅️",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
 
         /*Chip(
             label = {

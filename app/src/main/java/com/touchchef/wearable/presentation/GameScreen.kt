@@ -27,13 +27,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import kotlin.math.abs
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.Alignment.Companion.TopEnd
 
 @Composable
 fun GameScreen(
     webSocketClient: WebSocketClient,
     tasks: List<Task>,
     currentTaskIndex: Int,
-    onTaskChange: (Int) -> Unit
+    onTaskChange: (Int) -> Unit,
+    deviceId: String,
+    onNavigateToTaskStatus: (String, String) -> Unit
 ) {
     if (tasks.isEmpty()) {
         Box(
@@ -70,11 +75,9 @@ fun GameScreen(
                 .background(parseColor(currentTask.cook.color))
                 .pointerInput(Unit) {
                     detectVerticalDragGestures(
-                        onDragStart = {
-                            isScrollInProgress = true
-                        },
+                        onDragStart = { isScrollInProgress = true },
                         onDragEnd = {
-                            if (abs(offsetY) > 50 && isScrollInProgress) { // Threshold for swipe
+                            if (abs(offsetY) > 30 && isScrollInProgress) {
                                 if (offsetY > 0 && currentTaskIndex > 0) {
                                     onTaskChange(currentTaskIndex - 1)
                                 } else if (offsetY < 0 && currentTaskIndex < tasks.size - 1) {
@@ -91,25 +94,40 @@ fun GameScreen(
                             }
                         }
                     )
-                },
-            contentAlignment = Alignment.Center
+                }
         ) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.TopEnd
+                ) {
+                    Text(
+                        text = "*️⃣",
+                        modifier = Modifier
+                            .clickable {
+                                onNavigateToTaskStatus(deviceId, currentTask.taskName)
+                            }
+                            .padding(8.dp),
+                        style = TextStyle(fontSize = 20.sp),
+                        color = Color.White
+                    )
+                }
+
                 Text(
                     text = "Tâche en cours",
                     color = Color.White,
                     style = TextStyle(fontSize = 16.sp)
                 )
-                Spacer(modifier = Modifier.height(16.dp))
 
                 // Progress dots
                 Row(
                     horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    modifier = Modifier.padding(vertical = 16.dp)
                 ) {
                     repeat(tasks.size) { index ->
                         Box(
@@ -130,31 +148,32 @@ fun GameScreen(
                     }
                 }
 
+                // Center content with more spacing
+                Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = currentTask.taskName,
                     color = Color.White,
-                    style = TextStyle(fontSize = 14.sp),
-                    textAlign = TextAlign.Center
+                    style = TextStyle(fontSize = 20.sp),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Chef: ${currentTask.cook.name}",
                     color = Color.White,
-                    style = TextStyle(fontSize = 12.sp)
+                    style = TextStyle(fontSize = 16.sp)
                 )
-
+                Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = "${currentTaskIndex + 1}/${tasks.size}",
                     color = Color.White.copy(alpha = 0.7f),
-                    style = TextStyle(fontSize = 10.sp),
-                    modifier = Modifier.padding(top = 8.dp)
+                    style = TextStyle(fontSize = 14.sp)
                 )
             }
         }
     }
 }
 
-// Helper function to parse color
 fun parseColor(colorString: String): Color {
     return try {
         Color(android.graphics.Color.parseColor(colorString))

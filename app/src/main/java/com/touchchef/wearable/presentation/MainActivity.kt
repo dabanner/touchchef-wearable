@@ -123,8 +123,13 @@ class MainActivity : ComponentActivity() {
                         navigateToGameScreen = {
                             Log.d("MainActivity", "Navigating to confirmation screen")
                             runOnUiThread {
-                                navController.navigate("gameScreen/${deviceId}")
+                                navController.navigate("gameScreen/${deviceId}"){
+                                    popUpTo("qrcodeScreen") { inclusive = true }
+                                    popUpTo("confirmationScreen") { inclusive = true }
+                                }
+
                             }
+
 
                         }
                     )
@@ -142,35 +147,56 @@ class MainActivity : ComponentActivity() {
                         webSocketClient = webSocketClient,
                         tasks = gameViewModel.tasks,
                         currentTaskIndex = gameViewModel.currentTaskIndex,
+                        deviceId=deviceId,
                         onTaskChange = { newIndex ->
                             gameViewModel.onTaskChange(newIndex)
+                        },
+                        onNavigateToTaskStatus = { deviceId, taskName ->
+                            navController.navigate("taskStatusScreen/$deviceId/$taskName") {
+                                popUpTo("qrcodeScreen") { inclusive = true }
+                                popUpTo("confirmationScreen") { inclusive = true }
+                            }
                         }
                     )
                 }
 
 
-                composable("taskStatusScreen/{deviceId}/{taskId}") { backStackEntry ->
+                composable("taskStatusScreen/{deviceId}/{taskName}") { backStackEntry ->
                     val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
-                    val taskId = backStackEntry.arguments?.getString("taskId") ?: "null"
+                    val taskName = backStackEntry.arguments?.getString("taskName") ?: "null"
                     TaskStatusScreen(
                         onCancelled = {},
                         onCompleted = {},
                         onHelp = {
-                            navController.navigate("taskScreen/$deviceId") {
+                            navController.navigate("taskScreen/$deviceId/$taskName") {
                                 popUpTo("qrcodeScreen") { inclusive = true }
+                                popUpTo("confirmationScreen") { inclusive = true }
                             }
                         },
-                        onBack = {},
+                        onBack = {
+                            navController.navigate("gameScreen/$deviceId"){
+                                popUpTo("qrcodeScreen") { inclusive = true }
+                                popUpTo("confirmationScreen") { inclusive = true }
+                            }
+                        },
                     )
                 }
 
-                composable("taskScreen/{deviceId}") { backStackEntry ->
+                composable("taskScreen/{deviceId}/{taskName}") { backStackEntry ->
                     val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
+                    val taskName = backStackEntry.arguments?.getString("taskName") ?: "null"
                     Log.d("Task Device id", "device id : $deviceId")
                     TaskScreen(
                         taskHelpService = taskHelpService,
                         cookManagementService = cookManagementService,
-                        deviceId = deviceId
+                        deviceId = deviceId,
+                        taskName = taskName,
+                        onBack = {
+                            navController.navigate("taskStatusScreen/$deviceId/$taskName"){
+                                popUpTo("qrcodeScreen") { inclusive = true }
+                                popUpTo("confirmationScreen") { inclusive = true }
+                            }
+                        }
                     )
                 }
             }
