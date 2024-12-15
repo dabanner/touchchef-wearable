@@ -19,56 +19,74 @@ class CookManagementService(
     val cooksFlow: StateFlow<List<Cook>> = _cooksFlow
     private val gson = Gson()
 
-    init {
-        setupWebSocketListener()
+    companion object {
+        private const val TAG = "CookManagementService"
+        private const val MESSAGE_TYPE_COOKS_LIST = "cooksList"
+        private const val MESSAGE_SOURCE_ANGULAR = "angular"
     }
 
-    private fun setupWebSocketListener() {
+    init {
+        connectToWebSocket()
+    }
+
+    private fun connectToWebSocket() {
         webSocketClient.connect(
             onConnected = {
-                Log.d("CookManagementService", "WebSocket connected")
+                Log.d(TAG, "WebSocket connected")
+            },
+            onTaskMessage = { taskMessage ->
+                Log.d(TAG, "Received task message: $taskMessage")
             },
             onMessage = { message ->
-                try {
-                    val messageMap = gson.fromJson(message, Map::class.java) as? Map<String, Any>
-                    if (messageMap != null) {
-                        val type = messageMap["type"] as? String
-                        val from = messageMap["from"] as? String
-
-                        if (type == "cooksList" && from == "angular") {
-                            val cooksListData = messageMap["cooksList"] as? List<Map<String, Any>>
-                            val cooksList = cooksListData?.mapNotNull { cookData ->
-                                try {
-                                    Cook(
-                                        name = cookData["name"] as? String ?: "",
-                                        deviceId = cookData["deviceId"] as? String ?: "",
-                                        avatar = cookData["avatar"] as? String ?: ""
-                                    )
-                                } catch (e: Exception) {
-                                    Log.e("CookManagementService", "Error parsing cook data", e)
-                                    null
-                                }
-                            } ?: emptyList()
-
-                            _cooksFlow.value = cooksList
-                            Log.d("CookManagementService", "Updated cooks list: ${cooksList.size} cooks")
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e("CookManagementService", "Error processing message", e)
-                }
+                handleWebSocketMessage(message)
             },
             onError = { error ->
-                Log.e("CookManagementService", "WebSocket error: $error")
+                Log.e(TAG, "WebSocket error: $error")
             }
         )
     }
 
-    fun getCookById(cookId: String): Cook? {
-        return _cooksFlow.value.find { it.deviceId == cookId }
+    private fun handleWebSocketMessage(message: String) {
+        try {
+            val messageMap = gson.fromJson(message, Map::class.java) as? Map<String, Any>
+            val type = messageMap?.get("type") as? String
+            val from = messageMap?.get("from") as? String
+
+            if (type == MESSAGE_TYPE_COOKS_LIST && from == MESSAGE_SOURCE_ANGULAR) {
+                updateCooksList(messageMap)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error processing message", e)
+        }
     }
 
-    fun getAllCooks(): List<Cook> {
-        return _cooksFlow.value
+    private fun updateCooksList(messageMap: Map<String, Any>) {
+        try {
+            val cooksListData = messageMap["cooksList"] as? List<Map<String, Any>>
+            val cooksList = cooksListData?.mapNotNull { cookData -> createCookFromData(cookData) }
+                ?.filterNot { it.deviceId == deviceId } // Filter out current device
+                ?: emptyList()
+
+            _cooksFlow.value = cooksList
+            Log.d(TAG, "Updated cooks list: ${cooksList.size} cooks")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating cooks list", e)
+        }
     }
+
+    private fun createCookFromData(cookData: Map<String, Any>): Cook? {
+        return try {
+            Cook(
+                name = cookData["name"] as? String ?: return null,
+                deviceId = cookData["deviceId"] as? String ?: return null,
+                avatar = cookData["avatar"] as? String ?: return null
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error creating cook from data", e)
+            null
+        }
+    }
+
+    fun getCookById(cookId: String): Cook? = _cooksFlow.value.find { it.deviceId == cookId }
+    fun getAllCooks(): List<Cook> = _cooksFlow.value
 }
