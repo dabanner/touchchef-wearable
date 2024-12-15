@@ -65,9 +65,7 @@ fun ConfirmationScreen(
     val devicePreferences = DevicePreferences(context)
 
     val message = mapOf("type" to "confirmation", "to" to "angular", "from" to deviceId)
-    val jsonString = gson.toJson(message)
-    Log.d("ConfirmationScreen", "Sending JSON: $jsonString")
-    webSocketClient.sendMessage(jsonString, onResult = { result ->
+    webSocketClient.sendJson(message, onResult = { result ->
         isMessageSent = result
     })
 

@@ -1,6 +1,7 @@
 package com.touchchef.wearable.presentation
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
@@ -30,15 +31,12 @@ data class Task(
     val cook: Cook,
 )
 
-// GameViewModel to handle tasks
 class GameViewModel(
     private val webSocketClient: WebSocketClient,
-    context: Context
+    private val deviceId: String
 ) : ViewModel() {
     private val _tasks = mutableStateListOf<Task>()
     val tasks: List<Task> = _tasks
-    private var cachedDeviceId: String = ""
-    private var devicePreferences: DevicePreferences? = null
 
     private val _currentTaskIndex = mutableStateOf(0)
     val currentTaskIndex: Int get() = _currentTaskIndex.value
@@ -49,32 +47,28 @@ class GameViewModel(
         }
     }
 
-
     init {
-        viewModelScope.launch {
-            if (devicePreferences == null) {
-                devicePreferences = DevicePreferences(context)
-                cachedDeviceId = devicePreferences!!.deviceId.first() ?: ""
-            }
-            webSocketClient.addMessageListener { message ->
-                when {
-                    message.type == "addTask" && message.to == cachedDeviceId -> {
-                        message.assignedTask?.let { assignedTask ->
-                            val newTask = Task(
-                                taskName = assignedTask.taskName,
-                                cook = assignedTask.cook
-                            )
+        webSocketClient.setMessageListener { message ->
+            when {
+                message.type == "addTask" && message.to == deviceId -> {
+                    message.assignedTask?.let { assignedTask ->
+                        val newTask = Task(
+                            taskName = assignedTask.taskName,
+                            cook = assignedTask.cook
+                        )
+                        // Check if task already exists
+                        if (!_tasks.any { existingTask ->
+                                existingTask.taskName == newTask.taskName &&
+                                        existingTask.cook.deviceId == newTask.cook.deviceId
+                            }) {
                             _tasks.add(newTask)
+                            Log.d("addTask", "Added new task: $newTask")
+                        } else {
+                            Log.d("addTask", "Task already exists, skipping: $newTask")
                         }
                     }
-                    // Handle other message types if needed
                 }
             }
         }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        webSocketClient.removeMessageListener { /* reference to the same listener */ }
     }
 }

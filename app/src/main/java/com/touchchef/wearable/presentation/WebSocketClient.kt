@@ -31,16 +31,16 @@ class WebSocketClient {
         .readTimeout(0, TimeUnit.MILLISECONDS)
         .build()
 
-    // Add a list of message listeners
-    private val messageListeners = mutableListOf<(WebSocketMessage) -> Unit>()
+    private var messageListener: ((WebSocketMessage) -> Unit)? = null
 
-    fun addMessageListener(listener: (WebSocketMessage) -> Unit) {
-        messageListeners.add(listener)
+    fun setMessageListener(listener: (WebSocketMessage) -> Unit) {
+        messageListener = listener
     }
 
-    fun removeMessageListener(listener: (WebSocketMessage) -> Unit) {
-        messageListeners.remove(listener)
+    fun removeMessageListener() {
+        messageListener = null
     }
+
 
     fun connect(
         onConnected: () -> Unit,
@@ -56,12 +56,9 @@ class WebSocketClient {
 
             override fun onMessage(webSocket: WebSocket, text: String) {
                 onMessage(text)
-                // Parse the message and notify listeners
                 try {
                     val message = gson.fromJson(text, WebSocketMessage::class.java)
-                    messageListeners.forEach { listener ->
-                        listener(message)
-                    }
+                    messageListener?.invoke(message)
                 } catch (e: Exception) {
                     Log.e("WebSocket", "Error parsing message: $text", e)
                 }
@@ -101,6 +98,6 @@ class WebSocketClient {
     // Add cleanup method
     fun disconnect() {
         webSocket?.close(1000, "Normal closure")
-        messageListeners.clear()
+        this.removeMessageListener()
     }
 }

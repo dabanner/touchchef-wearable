@@ -19,9 +19,13 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.remember
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.touchchef.wearable.data.DevicePreferences
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -29,11 +33,19 @@ class MainActivity : ComponentActivity() {
     private lateinit var bpmService: BpmService
     private lateinit var qrCodeGenerator: QRCodeGenerator;
     private lateinit var handRaiseDetector: HandRaiseDetector
+    private lateinit var deviceId: String
+    private var devicePreferences: DevicePreferences? = null
 
     private val BODY_SENSOR_PERMISSION_CODE = 100
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (devicePreferences == null) {
+            devicePreferences = DevicePreferences(baseContext)
+        }
+        lifecycleScope.launch {
+            deviceId = DevicePreferences(baseContext).deviceId.first() ?: ""
+        }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         installSplashScreen()
         qrCodeGenerator = QRCodeGenerator()
@@ -87,22 +99,27 @@ class MainActivity : ComponentActivity() {
                         navigateToGameScreen = {
                             Log.d("MainActivity", "Navigating to confirmation screen")
                             runOnUiThread {
-                                navController.navigate("gameScreen")
+                                navController.navigate("gameScreen/${deviceId}")
                             }
 
                         }
                     )
                 }
 
-                // Add this to your NavHost
-                composable("gameScreen") {
-                    val gameViewModel = remember { GameViewModel(webSocketClient, baseContext) }
+                composable(
+                    route = "gameScreen/{deviceId}",
+                    arguments = listOf(navArgument("deviceId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val deviceId = backStackEntry.arguments?.getString("deviceId") ?: ""
+                    val gameViewModel = remember {
+                        GameViewModel(webSocketClient, deviceId = deviceId)
+                    }
                     GameScreen(
                         webSocketClient = webSocketClient,
                         tasks = gameViewModel.tasks,
                         currentTaskIndex = gameViewModel.currentTaskIndex,
-                            onTaskChange= {newIndex ->
-                                gameViewModel.onTaskChange(newIndex)
+                        onTaskChange = { newIndex ->
+                            gameViewModel.onTaskChange(newIndex)
                         }
                     )
                 }
