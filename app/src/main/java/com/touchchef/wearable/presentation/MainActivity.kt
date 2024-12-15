@@ -165,8 +165,32 @@ class MainActivity : ComponentActivity() {
                     val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
                     val taskName = backStackEntry.arguments?.getString("taskName") ?: "null"
                     TaskStatusScreen(
-                        onCancelled = {},
-                        onCompleted = {},
+                        onCancelled = {
+                            val message = mapOf("type" to "unactiveTask",
+                                "from" to deviceId,
+                                "to" to "unity"
+                                )
+                            webSocketClient.sendJson( message,  onResult = { success ->
+                                if (success) {
+                                    Log.d("WebSocket", "sent $message")
+                                } else {
+                                    Log.e("WebSocket", "Failed to send message")
+                                }
+                            })
+                        },
+                        onCompleted = {
+                            val message = mapOf("type" to "taskFinished",
+                                "from" to deviceId,
+                                "to" to "unity"
+                            )
+                            webSocketClient.sendJson( message,  onResult = { success ->
+                                if (success) {
+                                    Log.d("WebSocket", "sent $message")
+                                } else {
+                                    Log.e("WebSocket", "Failed to send message")
+                                }
+                            })
+                        },
                         onHelp = {
                             navController.navigate("taskScreen/$deviceId/$taskName") {
                                 popUpTo("qrcodeScreen") { inclusive = true }
