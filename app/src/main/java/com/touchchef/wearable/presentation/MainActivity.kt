@@ -24,7 +24,8 @@ import com.google.gson.Gson
 class MainActivity : ComponentActivity() {
     private val webSocketClient = WebSocketClient()
     private lateinit var bpmService: BpmService
-    private lateinit var qrCodeGenerator: QRCodeGenerator
+    private lateinit var qrCodeGenerator: QRCodeGenerator;
+    private lateinit var handRaiseDetector: HandRaiseDetector
     private lateinit var taskHelpService: TaskHelpService
     private lateinit var cookManagementService: CookManagementService
 
@@ -76,6 +77,11 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val navController = rememberNavController()
+            // Initialize the detector
+            handRaiseDetector = HandRaiseDetector(this)
+
+            // Start detection
+            handRaiseDetector.startDetecting()
 
             NavHost(navController = navController, startDestination = "qrcodeScreen") {
                 composable("qrcodeScreen") {
@@ -106,6 +112,7 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 }
+
 
                 composable("taskStatusScreen/{deviceId}/{taskId}") { backStackEntry ->
                     val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
@@ -240,5 +247,6 @@ class MainActivity : ComponentActivity() {
         if (::bpmService.isInitialized) {
             bpmService.stopMonitoring()
         }
+        handRaiseDetector.stopDetecting()
     }
 }
