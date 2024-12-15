@@ -15,7 +15,10 @@ import kotlinx.coroutines.launch
 
 data class AssignedTask(
     val taskName: String,
-    val cook: Cook
+    val cook: Cook,
+    val taskId: String,
+    val quantity: String,
+    val workStation: String
 )
 
 data class Cook(
@@ -29,6 +32,9 @@ data class Cook(
 data class Task(
     val taskName: String,
     val cook: Cook,
+    val taskId: String,
+    val quantity: String,
+    val workstation: String
 )
 
 class GameViewModel(
@@ -66,7 +72,10 @@ class GameViewModel(
                     message.assignedTask?.let { assignedTask ->
                         val newTask = Task(
                             taskName = assignedTask.taskName,
-                            cook = assignedTask.cook
+                            cook = assignedTask.cook,
+                            taskId = assignedTask.taskId,
+                            quantity = assignedTask.quantity,
+                            workstation = assignedTask.workStation
                         )
                         // Check if task already exists
                         if (!_tasks.any { existingTask ->
@@ -74,6 +83,20 @@ class GameViewModel(
                                         existingTask.cook.deviceId == newTask.cook.deviceId
                             }) {
                             _tasks.add(newTask)
+                            if (_tasks.size == 1) {
+                                val losMessage = mapOf("type" to "activeTask",
+                                    "from" to deviceId,
+                                    "to" to "table",
+                                    "assignedTask" to newTask
+                                )
+                                webSocketClient.sendJson(losMessage) { success ->
+                                    if (success) {
+                                        Log.d("HandRaiseDetector", "Hand raise event sent successfully")
+                                    } else {
+                                        Log.e("HandRaiseDetector", "Failed to send hand raise event")
+                                    }
+                                }
+                            }
                             Log.d("addTask", "Added new task: $newTask")
                         } else {
                             Log.d("addTask", "Task already exists, skipping: $newTask")
