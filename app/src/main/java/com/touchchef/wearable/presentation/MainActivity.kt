@@ -205,10 +205,7 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onBack = {
-                            navController.navigate("gameScreen/$deviceId"){
-                                popUpTo("qrcodeScreen") { inclusive = true }
-                                popUpTo("confirmationScreen") { inclusive = true }
-                            }
+                            navController.popBackStack()
                         },
                     )
                 }
@@ -223,10 +220,7 @@ class MainActivity : ComponentActivity() {
                         deviceId = deviceId,
                         taskName = taskName,
                         onBack = {
-                            navController.navigate("taskStatusScreen/$deviceId/$taskName"){
-                                popUpTo("qrcodeScreen") { inclusive = true }
-                                popUpTo("confirmationScreen") { inclusive = true }
-                            }
+                            navController.popBackStack()
                         }
                     )
                 }
