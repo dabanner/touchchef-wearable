@@ -44,6 +44,18 @@ class GameViewModel(
     fun onTaskChange(newIndex: Int) {
         if (newIndex in 0 until _tasks.size) {
             _currentTaskIndex.value = newIndex
+            val message = mapOf("type" to "activeTask",
+                "from" to deviceId,
+                "to" to "table",
+                "assignedTask" to tasks[currentTaskIndex]
+            )
+            webSocketClient.sendJson(message) { success ->
+                if (success) {
+                    Log.d("HandRaiseDetector", "Hand raise event sent successfully")
+                } else {
+                    Log.e("HandRaiseDetector", "Failed to send hand raise event")
+                }
+            }
         }
     }
 
