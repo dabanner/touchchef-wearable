@@ -62,6 +62,7 @@ fun GameScreen(
     } else {
         val currentTask = tasks[currentTaskIndex]
         var offsetY by remember { mutableStateOf(0f) }
+        var isScrollInProgress by remember { mutableStateOf(false) }
 
         Box(
             modifier = Modifier
@@ -69,8 +70,11 @@ fun GameScreen(
                 .background(parseColor(currentTask.cook.color))
                 .pointerInput(Unit) {
                     detectVerticalDragGestures(
+                        onDragStart = {
+                            isScrollInProgress = true
+                        },
                         onDragEnd = {
-                            if (abs(offsetY) > 50) { // Threshold for swipe
+                            if (abs(offsetY) > 50 && isScrollInProgress) { // Threshold for swipe
                                 if (offsetY > 0 && currentTaskIndex > 0) {
                                     onTaskChange(currentTaskIndex - 1)
                                 } else if (offsetY < 0 && currentTaskIndex < tasks.size - 1) {
@@ -78,10 +82,13 @@ fun GameScreen(
                                 }
                             }
                             offsetY = 0f
+                            isScrollInProgress = false
                         },
                         onVerticalDrag = { change, dragAmount ->
-                            offsetY += dragAmount
-                            change.consume()
+                            if (isScrollInProgress) {
+                                offsetY += dragAmount
+                                change.consume()
+                            }
                         }
                     )
                 },
