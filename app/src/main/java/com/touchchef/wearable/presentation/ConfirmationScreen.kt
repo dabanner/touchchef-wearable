@@ -24,7 +24,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Text
 import com.google.gson.Gson
 import com.touchchef.wearable.R
@@ -38,6 +37,7 @@ fun ConfirmationScreen(
     deviceId: String,
     name: String,
     avatar: String,
+    avatarColor: String,
     navigateToGameScreen: () -> Unit
 ) {
     val bricolageGrotesque = FontFamily(
@@ -70,6 +70,8 @@ fun ConfirmationScreen(
         isMessageSent = result
     })
 
+    Log.d("ConfirmationScreen", "Color: $avatarColor")
+
     // Effet pour gérer le feedback
     LaunchedEffect(isMessageSent) {
         devicePreferences.deviceId.first()?.let {cachedDeviceId = it}
@@ -84,17 +86,15 @@ fun ConfirmationScreen(
                 Log.d("WebSocket", "Received message: $message")
                 // Désérialisation du message
                 val response = gson.fromJson(message, Map::class.java)
-                val to = response["to"] as? String
                 val type = response["type"] as? String
 
-                // Vérification si le `to` correspond à notre `deviceId`
                 if (type == "startGame") {
                     navigateToGameScreen()
                 }
             },
-            onTaskMessage = {message ->
+            onTaskMessage = {_ ->
                             },
-            onError = { message ->
+            onError = {_ ->
             }
         )
     }
@@ -109,7 +109,7 @@ fun ConfirmationScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(Color(android.graphics.Color.parseColor("#$avatarColor"))),
         contentAlignment = Alignment.Center
     ) {
         when {
@@ -128,7 +128,7 @@ fun ConfirmationScreen(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = bricolageGrotesque,
-                        color = Color(0xFFFFC403)
+                        color = Color.White
                     )
                     Text(
                         text = "En attente du lancement de la partie...",

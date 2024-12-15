@@ -38,13 +38,15 @@ fun GameScreen(
     currentTaskIndex: Int,
     onTaskChange: (Int) -> Unit,
     deviceId: String,
-    onNavigateToTaskStatus: (String, String) -> Unit
+    onNavigateToTaskStatus: (String, String) -> Unit,
+    avatarColor: String,
 ) {
     if (tasks.isEmpty()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF87CEEB)),
+                .background(
+                    parseColor("#$avatarColor")),
             contentAlignment = Alignment.Center
         ) {
             Column(
