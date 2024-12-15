@@ -83,6 +83,7 @@ class MainActivity : ComponentActivity() {
                         avatar = it.arguments?.getString("avatar") ?: "default_avatar.png"
                     )
                 }
+
             }
         }
     }

@@ -67,4 +67,6 @@ dependencies {
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
     implementation(libs.okhttp)
+    implementation(libs.material.icons.core)
+    implementation(libs.material.icons.extended)
 }
