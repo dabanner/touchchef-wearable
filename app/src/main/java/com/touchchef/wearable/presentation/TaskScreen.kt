@@ -228,9 +228,19 @@ private fun TaskActionsDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(36.dp),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF8BC34A))
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFE8FFE3))
                 ) {
-                    Text("Terminer la tâche", fontSize = 12.sp)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Terminer la tâche",
+                            fontSize = 12.sp,
+                            color = Color(0xFF417E00)
+                        )
+                        Text("✅", fontSize = 12.sp)
+                    }
                 }
 
                 Button(
@@ -238,9 +248,19 @@ private fun TaskActionsDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(36.dp),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFE91E1E))
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFFFF4F4))
                 ) {
-                    Text("Annuler l'aide", fontSize = 12.sp)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Annuler l'aide",
+                            fontSize = 12.sp,
+                            color = Color(0xFFFF2626)
+                        )
+                        Text("❌", fontSize = 12.sp)
+                    }
                 }
 
                 Button(
@@ -248,9 +268,19 @@ private fun TaskActionsDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(36.dp),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF424242))
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0x4FFFFFFF))
                 ) {
-                    Text("Retour", fontSize = 12.sp)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Retour",
+                            fontSize = 12.sp,
+                            color = Color(0xFF000000)
+                        )
+                        Text("⬅️", fontSize = 12.sp)
+                    }
                 }
             }
         }
@@ -302,20 +332,35 @@ private fun ActionButtonsSection(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Chip(
-            label = { Text("Aide spécifique", fontSize = 12.sp) },
+            label = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Aide spécifique", fontSize = 10.sp,color = Color(0xFF0084FF))
+                }
+            },
             onClick = onSpecificHelpClick,
             modifier = Modifier.width(120.dp),
-            colors = ChipDefaults.chipColors(backgroundColor = Color(0xFFFFC403))
+            colors = ChipDefaults.chipColors(backgroundColor = Color(0xFFE3F6FF))
         )
 
-        Chip(
-            label = { Text("Aide générale", fontSize = 12.sp) },
+        /*Chip(
+            label = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Aide générale", fontSize = 10.sp,color = Color(0xFF0084FF))
+                }
+            },
             onClick = onGeneralHelpClick,
             modifier = Modifier.width(120.dp),
-            colors = ChipDefaults.chipColors(backgroundColor = Color(0xFFFFC403))
-        )
+            colors = ChipDefaults.chipColors(backgroundColor = Color(0xFFE3F6FF))
+        )*/
     }
 }
+
 
 @Composable
 private fun PendingRequestsDialog(
@@ -423,18 +468,18 @@ private fun RequestRow(
         }
 
         if (showActions) {
-            Row {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Button(
                     onClick = { onAccept(request) },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF8BC34A))
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFE8FFE3))
                 ) {
-                    Text("✓", fontSize = 5.sp)
+                    Text("✅", fontSize = 12.sp)
                 }
                 Button(
                     onClick = { onDismiss(request) },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFE91E1E))
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFFFF4F4))
                 ) {
-                    Text("✕", fontSize = 5.sp)
+                    Text("❌", fontSize = 12.sp)
                 }
             }
         }

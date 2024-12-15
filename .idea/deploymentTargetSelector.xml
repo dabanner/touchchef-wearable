@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DIALOG" />
-        <DropdownSelection timestamp="2024-12-14T12:58:32.149934Z">
+        <DropdownSelection timestamp="2024-12-15T12:08:51.565909Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/saadbeidouri/.android/avd/Wear_OS_Small_Round_API_34.avd" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/saadbeidouri/.android/avd/Wear_OS_Large_Round_API_34.avd" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -15,12 +15,12 @@
           <targets>
             <Target type="DEFAULT_BOOT">
               <handle>
-                <DeviceId pluginId="LocalEmulator" identifier="path=/Users/saadbeidouri/.android/avd/Wear_OS_Small_Round_API_34.avd" />
+                <DeviceId pluginId="LocalEmulator" identifier="path=/Users/saadbeidouri/.android/avd/Wear_OS_Large_Round_API_34.avd" />
               </handle>
             </Target>
             <Target type="DEFAULT_BOOT">
               <handle>
-                <DeviceId pluginId="LocalEmulator" identifier="path=/Users/saadbeidouri/.android/avd/Wear_OS_Large_Round_API_34.avd" />
+                <DeviceId pluginId="LocalEmulator" identifier="path=/Users/saadbeidouri/.android/avd/Wear_OS_Small_Round_API_34.avd" />
               </handle>
             </Target>
           </targets>

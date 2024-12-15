@@ -1,5 +1,6 @@
 package com.touchchef.wearable.presentation
 
+import TaskStatusScreen
 import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.Sensor
@@ -103,6 +104,21 @@ class MainActivity : ComponentActivity() {
                                 popUpTo("qrcodeScreen") { inclusive = true }
                             }
                         }
+                    )
+                }
+
+                composable("taskStatusScreen/{deviceId}/{taskId}") { backStackEntry ->
+                    val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
+                    val taskId = backStackEntry.arguments?.getString("taskId") ?: "null"
+                    TaskStatusScreen(
+                        onCancelled = {},
+                        onCompleted = {},
+                        onHelp = {
+                            navController.navigate("taskScreen/$deviceId") {
+                                popUpTo("qrcodeScreen") { inclusive = true }
+                            }
+                        },
+                        onBack = {},
                     )
                 }
 
