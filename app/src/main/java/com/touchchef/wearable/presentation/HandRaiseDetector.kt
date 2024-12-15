@@ -13,10 +13,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class HandRaiseDetector(private val context: Context) {
+class HandRaiseDetector(private val context: Context, private val webSocketClient: WebSocketClient) {
     private var isHandRaised = false
     private var lastHandRaiseState = false
-    private val webSocketClient = WebSocketClient()
     private var devicePreferences: DevicePreferences? = null
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 

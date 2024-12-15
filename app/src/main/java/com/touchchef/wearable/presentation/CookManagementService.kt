@@ -5,12 +5,6 @@ import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-data class Cook(
-    val name: String,
-    val deviceId: String,
-    val avatar: String
-)
-
 class CookManagementService(
     private val webSocketClient: WebSocketClient,
     private val deviceId: String
@@ -79,7 +73,8 @@ class CookManagementService(
             Cook(
                 name = cookData["name"] as? String ?: return null,
                 deviceId = cookData["deviceId"] as? String ?: return null,
-                avatar = cookData["avatar"] as? String ?: return null
+                avatar = cookData["avatar"] as? String ?: return null,
+                color = cookData["color"] as? String ?: return null
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error creating cook from data", e)

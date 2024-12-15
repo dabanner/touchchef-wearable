@@ -8,15 +8,21 @@ import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.remember
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.touchchef.wearable.data.DevicePreferences
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import android.Manifest
 import com.google.gson.Gson
@@ -30,12 +36,21 @@ class MainActivity : ComponentActivity() {
     private lateinit var cookManagementService: CookManagementService
 
     private val gson = Gson()
+    private lateinit var deviceId: String
+    private var devicePreferences: DevicePreferences? = null
 
     private val BODY_SENSOR_PERMISSION_CODE = 100
     private val NOTIFICATION_PERMISSION_CODE = 102
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (devicePreferences == null) {
+            devicePreferences = DevicePreferences(baseContext)
+        }
+        lifecycleScope.launch {
+            deviceId = DevicePreferences(baseContext).deviceId.first() ?: ""
+        }
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         super.onCreate(savedInstanceState)
 
         installSplashScreen()
@@ -78,7 +93,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             // Initialize the detector
-            handRaiseDetector = HandRaiseDetector(this)
+            handRaiseDetector = HandRaiseDetector(this, webSocketClient)
 
             // Start detection
             handRaiseDetector.startDetecting()
@@ -105,10 +120,30 @@ class MainActivity : ComponentActivity() {
                         deviceId = deviceId,
                         name = backStackEntry.arguments?.getString("name") ?: "Inconnu",
                         avatar = backStackEntry.arguments?.getString("avatar") ?: "default_avatar.png",
-                        onConfirmation = {
-                            navController.navigate("taskScreen/$deviceId") {
-                                popUpTo("qrcodeScreen") { inclusive = true }
+                        navigateToGameScreen = {
+                            Log.d("MainActivity", "Navigating to confirmation screen")
+                            runOnUiThread {
+                                navController.navigate("gameScreen/${deviceId}")
                             }
+
+                        }
+                    )
+                }
+
+                composable(
+                    route = "gameScreen/{deviceId}",
+                    arguments = listOf(navArgument("deviceId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val deviceId = backStackEntry.arguments?.getString("deviceId") ?: ""
+                    val gameViewModel = remember {
+                        GameViewModel(webSocketClient, deviceId = deviceId)
+                    }
+                    GameScreen(
+                        webSocketClient = webSocketClient,
+                        tasks = gameViewModel.tasks,
+                        currentTaskIndex = gameViewModel.currentTaskIndex,
+                        onTaskChange = { newIndex ->
+                            gameViewModel.onTaskChange(newIndex)
                         }
                     )
                 }
@@ -248,5 +283,6 @@ class MainActivity : ComponentActivity() {
             bpmService.stopMonitoring()
         }
         handRaiseDetector.stopDetecting()
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 }

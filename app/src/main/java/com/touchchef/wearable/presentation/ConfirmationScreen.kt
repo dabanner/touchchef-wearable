@@ -28,7 +28,9 @@ import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Text
 import com.google.gson.Gson
 import com.touchchef.wearable.R
+import com.touchchef.wearable.data.DevicePreferences
 import com.touchchef.wearable.utils.FeedbackManager
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun ConfirmationScreen(
@@ -36,7 +38,7 @@ fun ConfirmationScreen(
     deviceId: String,
     name: String,
     avatar: String,
-    onConfirmation: () -> Unit
+    navigateToGameScreen: () -> Unit
 ) {
     val bricolageGrotesque = FontFamily(
         Font(R.font.bricolagegrotesque_medium, FontWeight.Normal),
@@ -60,20 +62,41 @@ fun ConfirmationScreen(
     val context = LocalContext.current
     val feedbackManager = remember { FeedbackManager(context) }
     var hasPlayedFeedback by remember { mutableStateOf(false) }
+    var cachedDeviceId = "null"
+    val devicePreferences = DevicePreferences(context)
 
     val message = mapOf("type" to "confirmation", "to" to "angular", "from" to deviceId)
-    val jsonString = gson.toJson(message)
-    Log.d("ConfirmationScreen", "Sending JSON: $jsonString")
-    webSocketClient.sendMessage(jsonString, onResult = { result ->
+    webSocketClient.sendJson(message, onResult = { result ->
         isMessageSent = result
     })
 
     // Effet pour gérer le feedback
     LaunchedEffect(isMessageSent) {
+        devicePreferences.deviceId.first()?.let {cachedDeviceId = it}
         if (isMessageSent && !hasPlayedFeedback) {
             feedbackManager.playSuccessFeedback()
             hasPlayedFeedback = true
         }
+        webSocketClient.connect(
+            onConnected = {
+            },
+            onMessage = { message ->
+                Log.d("WebSocket", "Received message: $message")
+                // Désérialisation du message
+                val response = gson.fromJson(message, Map::class.java)
+                val to = response["to"] as? String
+                val type = response["type"] as? String
+
+                // Vérification si le `to` correspond à notre `deviceId`
+                if (type == "startGame") {
+                    navigateToGameScreen()
+                }
+            },
+            onTaskMessage = {message ->
+                            },
+            onError = { message ->
+            }
+        )
     }
 
     // Cleanup lors de la destruction du composable
@@ -127,8 +150,5 @@ fun ConfirmationScreen(
             }
         }
 
-    }
-    Button(onClick = onConfirmation) {
-        Text("Confirmer")
     }
 }

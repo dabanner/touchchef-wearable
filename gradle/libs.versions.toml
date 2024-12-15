@@ -1,5 +1,7 @@
 [versions]
 agp = "8.6.0"
+composeFoundationVersion = "1.4.0"
+composeMaterialVersion = "1.4.0"
 datastorePreferences = "1.1.1"
 gson = "2.10.1"
 javaxInject = "1"
@@ -16,8 +18,11 @@ wearToolingPreview = "1.0.0"
 activityCompose = "1.8.0"
 coreSplashscreen = "1.0.1"
 zxing = "3.5.2"
+uiTestAndroid = "1.7.2"
 
 [libraries]
+compose-foundation-v140 = { module = "androidx.wear.compose:compose-foundation", version.ref = "composeFoundationVersion" }
+compose-material-v140 = { module = "androidx.wear.compose:compose-material", version.ref = "composeMaterialVersion" }
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
@@ -44,6 +49,7 @@ wear-ongoing = { group = "androidx.wear", name = "wear-ongoing", version = "1.0.
 wear-remote-interactions = { group = "androidx.wear", name = "wear-remote-interactions", version = "1.0.0" }
 
 
+ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

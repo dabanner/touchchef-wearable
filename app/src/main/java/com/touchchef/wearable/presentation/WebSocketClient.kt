@@ -9,6 +9,19 @@ import okhttp3.WebSocketListener
 import java.util.concurrent.TimeUnit
 import com.google.gson.Gson
 
+data class WebSocketMessage(
+    val from: String,
+    val to: String,
+    val type: String,
+    val assignedTask: AssignedTask? = null
+)
+
+data class TaskData(
+    val type: String,
+    val quantity: Int
+)
+
+// Updated WebSocketClient
 class WebSocketClient {
     private val serverUrl = "ws://websocket.chhilif.com/ws"
     private var webSocket: WebSocket? = null
@@ -33,6 +46,17 @@ class WebSocketClient {
         Log.d("WebSocketClient", "Initialized with deviceId: $deviceId")
     }
 
+    private var messageListener: ((WebSocketMessage) -> Unit)? = null
+
+    fun setMessageListener(listener: (WebSocketMessage) -> Unit) {
+        messageListener = listener
+    }
+
+    fun removeMessageListener() {
+        messageListener = null
+    }
+
+
     fun connect(
         onConnected: () -> Unit,
         onMessage: (String) -> Unit,
@@ -54,25 +78,12 @@ class WebSocketClient {
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
+                onMessage(text)
                 try {
-                    val message = gson.fromJson(text, Map::class.java) as Map<String, Any>
-                    val type = message["type"] as? String
-                    val to = message["to"] as? String
-
-                    Log.d("WebSocketClient", "Received raw message on device $deviceId: $text")
-
-                    // Check if this is a task-related message for this device
-                    if ((to == deviceId || to == "all" || to == "allWatches") &&
-                        type in listOf("help_request", "task_notification", "task_acceptance")) {
-                        Log.d("WebSocketClient", "Processing task message for device $deviceId")
-                        handler.post { onTaskMessage(message) }
-                    } else {
-                        // Handle non-task messages
-                        handler.post { onMessage(text) }
-                    }
+                    val message = gson.fromJson(text, WebSocketMessage::class.java)
+                    messageListener?.invoke(message)
                 } catch (e: Exception) {
-                    Log.e("WebSocketClient", "Error processing message", e)
-                    handler.post { onMessage(text) }
+                    Log.e("WebSocket", "Error parsing message: $text", e)
                 }
             }
 
@@ -134,5 +145,11 @@ class WebSocketClient {
             Log.e("WebSocketClient", "Error sending JSON message", e)
             onResult(false)
         }
+    }
+
+    // Add cleanup method
+    fun disconnect() {
+        webSocket?.close(1000, "Normal closure")
+        this.removeMessageListener()
     }
 }
