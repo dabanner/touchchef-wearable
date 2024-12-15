@@ -12,7 +12,6 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.remember
-import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
@@ -104,42 +103,47 @@ class MainActivity : ComponentActivity() {
                         webSocketClient = webSocketClient,
                         context = baseContext,
                         qrCodeGenerator = qrCodeGenerator,
-                        navigateToConfirmationScreen = { name, avatar, deviceId ->
-                            Log.d("MainActivity", "Navigating to confirmation screen")
+                        navigateToConfirmationScreen = { name, avatar, deviceId, avatarColor ->
+                            val avatarColorFix = avatarColor.replace("#", "")
+                            Log.d("MainActivity", "Navigating to confirmation screen with name: $name, avatar: $avatar, deviceId: $deviceId, avatarColor: $avatarColorFix")
                             runOnUiThread {
-                                navController.navigate("confirmationScreen/$name/$avatar/$deviceId")
+                                navController.navigate("confirmationScreen/$name/$avatar/$deviceId/$avatarColorFix")
                             }
                         }
                     )
                 }
 
-                composable("confirmationScreen/{name}/{avatar}/{deviceId}") { backStackEntry ->
+                composable("confirmationScreen/{name}/{avatar}/{deviceId}/{avatarColor}") { backStackEntry ->
+                    val name = backStackEntry.arguments?.getString("name") ?: "Inconnu"
+                    val avatar = backStackEntry.arguments?.getString("avatar") ?: "one.png"
                     val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
+                    val avatarColor = backStackEntry.arguments?.getString("avatarColor") ?: "ffffff"
+
                     ConfirmationScreen(
                         webSocketClient = webSocketClient,
                         deviceId = deviceId,
-                        name = backStackEntry.arguments?.getString("name") ?: "Inconnu",
-                        avatar = backStackEntry.arguments?.getString("avatar") ?: "default_avatar.png",
+                        name = name,
+                        avatar = avatar,
+                        avatarColor = avatarColor,
                         navigateToGameScreen = {
                             Log.d("MainActivity", "Navigating to confirmation screen")
                             runOnUiThread {
-                                navController.navigate("gameScreen/${deviceId}"){
+                                navController.navigate("gameScreen/${deviceId}/${avatarColor}") {
                                     popUpTo("qrcodeScreen") { inclusive = true }
                                     popUpTo("confirmationScreen") { inclusive = true }
                                 }
-
                             }
-
 
                         }
                     )
                 }
 
                 composable(
-                    route = "gameScreen/{deviceId}",
+                    route = "gameScreen/{deviceId}/{avatarColor}",
                     arguments = listOf(navArgument("deviceId") { type = NavType.StringType })
                 ) { backStackEntry ->
                     val deviceId = backStackEntry.arguments?.getString("deviceId") ?: ""
+                    val avatarColor = backStackEntry.arguments?.getString("avatarColor") ?: "ffffff"
                     val gameViewModel = remember {
                         GameViewModel(webSocketClient, deviceId = deviceId)
                     }
@@ -147,6 +151,7 @@ class MainActivity : ComponentActivity() {
                         webSocketClient = webSocketClient,
                         tasks = gameViewModel.tasks,
                         currentTaskIndex = gameViewModel.currentTaskIndex,
+                        avatarColor = avatarColor,
                         deviceId=deviceId,
                         onTaskChange = { newIndex ->
                             gameViewModel.onTaskChange(newIndex)

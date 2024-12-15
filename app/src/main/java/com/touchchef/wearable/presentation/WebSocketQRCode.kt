@@ -31,7 +31,7 @@ fun WebSocketQRCode(
     webSocketClient: WebSocketClient,
     context: android.content.Context,
     qrCodeGenerator: QRCodeGenerator,
-    navigateToConfirmationScreen: (String, String, String) -> Unit // Cette fonction permet de naviguer vers l'écran de confirmation
+    navigateToConfirmationScreen: (String, String, String, String) -> Unit // Cette fonction permet de naviguer vers l'écran de confirmation
 ) {
     val isConnected = remember { mutableStateOf(false) }
     val errorMessage = remember { mutableStateOf<String?>(null) }
@@ -72,9 +72,9 @@ fun WebSocketQRCode(
                     // On reçoit les infos du cuisinier
                     val name = response["name"] as? String ?: "Inconnu"
                     val avatar = response["avatar"] as? String ?: "a.png"
-
+                    val avatarColor = response["avatarColor"] as? String ?: "ffffff"
                     // On navigue vers l'écran de confirmation avec le nom et l'avatar
-                    navigateToConfirmationScreen(name, avatar, cachedDeviceId)
+                    navigateToConfirmationScreen(name, avatar, cachedDeviceId, avatarColor)
                 }
             },
             onError = { message ->
