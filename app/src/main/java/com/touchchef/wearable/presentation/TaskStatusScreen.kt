@@ -12,6 +12,7 @@ import androidx.wear.compose.material.*
 
 @Composable
 fun TaskStatusScreen(
+    avatarColor: String,
     onCompleted: () -> Unit,
     onCancelled: () -> Unit,
     onHelp: () -> Unit,
@@ -26,8 +27,8 @@ fun TaskStatusScreen(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFF78C0FF),
-                            Color(0xFF78C0FF)
+                            parseColor("#$avatarColor"),
+                            parseColor("#$avatarColor")
                         )
                     )
                 )
@@ -160,5 +161,13 @@ fun TaskStatusScreen(
             }
         }
 
+    }
+}
+
+fun parseColor(colorString: String): Color {
+    return try {
+        Color(android.graphics.Color.parseColor(colorString))
+    } catch (e: Exception) {
+        Color(0xFF87CEEB) // Default color if parsing fails
     }
 }

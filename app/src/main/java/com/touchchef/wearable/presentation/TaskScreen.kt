@@ -167,7 +167,7 @@ private fun ActiveTaskSection(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Tâche #${helpRequest.taskId}",
+                        text = "Tâche - ${helpRequest.taskId} -",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )

@@ -78,12 +78,38 @@ class WebSocketClient {
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
-                onMessage(text)
                 try {
-                    val message = gson.fromJson(text, WebSocketMessage::class.java)
-                    messageListener?.invoke(message)
+                    // First try to parse as generic Map for task messages
+                    val mapMessage = gson.fromJson(text, Map::class.java) as Map<String, Any>
+                    val type = mapMessage["type"] as? String
+                    val to = mapMessage["to"] as? String
+
+                    Log.d("WebSocketClient", "Received raw message on device $deviceId: $text")
+
+                    // Handle task-related messages
+                    if ((to == deviceId || to == "all" || to == "allWatches") &&
+                        type in listOf("help_request", "task_notification", "task_acceptance")) {
+                        Log.d("WebSocketClient", "Processing task message for device $deviceId")
+                        handler.post { onTaskMessage(mapMessage) }
+                    }
+
+                    // Try to parse as WebSocketMessage for messageListener
+                    try {
+                        val wsMessage = gson.fromJson(text, WebSocketMessage::class.java)
+                        messageListener?.let { listener ->
+                            handler.post { listener(wsMessage) }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("WebSocket", "Error parsing WebSocketMessage: $text", e)
+                    }
+
+                    // Always call onMessage callback
+                    handler.post { onMessage(text) }
+
                 } catch (e: Exception) {
-                    Log.e("WebSocket", "Error parsing message: $text", e)
+                    Log.e("WebSocketClient", "Error processing message", e)
+                    // If parsing fails completely, still call onMessage with raw text
+                    handler.post { onMessage(text) }
                 }
             }
 

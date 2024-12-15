@@ -156,8 +156,8 @@ class MainActivity : ComponentActivity() {
                         onTaskChange = { newIndex ->
                             gameViewModel.onTaskChange(newIndex)
                         },
-                        onNavigateToTaskStatus = { deviceId, taskName ->
-                            navController.navigate("taskStatusScreen/$deviceId/$taskName") {
+                        onNavigateToTaskStatus = { deviceId, taskName,avatarColor ->
+                            navController.navigate("taskStatusScreen/$deviceId/$taskName/$avatarColor") {
                                 popUpTo("qrcodeScreen") { inclusive = true }
                                 popUpTo("confirmationScreen") { inclusive = true }
                             }
@@ -166,10 +166,12 @@ class MainActivity : ComponentActivity() {
                 }
 
 
-                composable("taskStatusScreen/{deviceId}/{taskName}") { backStackEntry ->
+                composable("taskStatusScreen/{deviceId}/{taskName}/{avatarColor}") { backStackEntry ->
                     val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
                     val taskName = backStackEntry.arguments?.getString("taskName") ?: "null"
+                    val avatarColor = backStackEntry.arguments?.getString("avatarColor") ?: "ffffff"
                     TaskStatusScreen(
+                        avatarColor = avatarColor,
                         onCancelled = {
                             val message = mapOf("type" to "unactiveTask",
                                 "from" to deviceId,

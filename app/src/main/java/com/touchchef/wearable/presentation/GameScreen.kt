@@ -38,7 +38,7 @@ fun GameScreen(
     currentTaskIndex: Int,
     onTaskChange: (Int) -> Unit,
     deviceId: String,
-    onNavigateToTaskStatus: (String, String) -> Unit,
+    onNavigateToTaskStatus: (String, String, String) -> Unit,
     avatarColor: String,
 ) {
     if (tasks.isEmpty()) {
@@ -112,7 +112,7 @@ fun GameScreen(
                         text = "*️⃣",
                         modifier = Modifier
                             .clickable {
-                                onNavigateToTaskStatus(deviceId, currentTask.taskName)
+                                onNavigateToTaskStatus(deviceId, currentTask.taskName,avatarColor)
                             }
                             .padding(8.dp),
                         style = TextStyle(fontSize = 20.sp),
