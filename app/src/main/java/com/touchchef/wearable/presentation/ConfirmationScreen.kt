@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Text
 import com.google.gson.Gson
 import com.touchchef.wearable.R
@@ -91,6 +92,8 @@ fun ConfirmationScreen(
                     navigateToGameScreen()
                 }
             },
+            onTaskMessage = {message ->
+                            },
             onError = { message ->
             }
         )

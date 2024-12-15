@@ -99,7 +99,7 @@ class BpmService(
                         }
                     }
                 }
-                delay(1000)
+                delay(100000)
             }
         }
     }

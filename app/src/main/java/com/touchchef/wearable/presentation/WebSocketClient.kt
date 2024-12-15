@@ -27,9 +27,24 @@ class WebSocketClient {
     private var webSocket: WebSocket? = null
     private val gson = Gson()
     var isConnected = false
+    private var deviceId: String = ""
+
     private val client = OkHttpClient.Builder()
         .readTimeout(0, TimeUnit.MILLISECONDS)
         .build()
+
+
+    private var onTaskMessageReceived: ((Map<String, Any>) -> Unit)? = null
+
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+
+
+
+    fun initialize(deviceId: String) {
+        Log.d("WebSocketClient", "Device ID : ${deviceId}")
+        this.deviceId = deviceId
+        Log.d("WebSocketClient", "Initialized with deviceId: $deviceId")
+    }
 
     private var messageListener: ((WebSocketMessage) -> Unit)? = null
 
@@ -45,11 +60,19 @@ class WebSocketClient {
     fun connect(
         onConnected: () -> Unit,
         onMessage: (String) -> Unit,
-        onError: (String) -> Unit
+        onError: (String) -> Unit,
+        onTaskMessage: (Map<String, Any>) -> Unit,
     ) {
+        if (deviceId.isEmpty()) {
+            Log.e("WebSocketClient", "DeviceId not initialized")
+            onError("DeviceId not initialized: $deviceId")
+            return
+        }
+
         val request = Request.Builder().url(serverUrl).build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
+                Log.d("WebSocketClient", "WebSocket connection opened")
                 isConnected = true
                 onConnected()
             }
@@ -64,33 +87,62 @@ class WebSocketClient {
                 }
             }
 
+
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                Log.e("WebSocketClient", "WebSocket failure: ${t.message}", t)
                 isConnected = false
                 onError(t.message ?: "Unknown error")
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                Log.d("WebSocketClient", "WebSocket closed: $reason")
                 isConnected = false
             }
         })
     }
 
     fun sendMessage(message: String, onResult: (Boolean) -> Unit) {
-        if (isConnected && webSocket != null) {
+        if (!isConnected || webSocket == null) {
+            Log.e("WebSocketClient", "Failed to send message - not connected")
+            onResult(false)
+            return
+        }
+
+        try {
             val success = webSocket!!.send(message)
+            Log.d("WebSocketClient", "Sent message: $message, success: $success")
             onResult(success)
-        } else {
+        } catch (e: Exception) {
+            Log.e("WebSocketClient", "Error sending message", e)
             onResult(false)
         }
     }
 
     fun sendJson(message: Any, onResult: (Boolean) -> Unit) {
-        if (webSocket != null) {
-            val jsonString = gson.toJson(message)
-            Log.d("WebSocket", "Sending JSON: $jsonString")
+        if (!isConnected || webSocket == null) {
+            Log.e("WebSocketClient", "Failed to send JSON - not connected")
+            onResult(false)
+            return
+        }
+
+        try {
+            // Force include deviceId in outgoing messages
+            val messageWithDeviceId = when (message) {
+                is Map<*, *> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val mutableMap = (message as Map<String, Any>).toMutableMap()
+                    mutableMap["from"] = deviceId  // Always set deviceId as "from"
+                    mutableMap
+                }
+                else -> message
+            }
+
+            val jsonString = gson.toJson(messageWithDeviceId)
+            Log.d("WebSocketClient", "Sending JSON: $jsonString")
             val success = webSocket!!.send(jsonString)
             onResult(success)
-        } else {
+        } catch (e: Exception) {
+            Log.e("WebSocketClient", "Error sending JSON message", e)
             onResult(false)
         }
     }

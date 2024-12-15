@@ -70,4 +70,8 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.compose.material.v140)
     implementation(libs.compose.foundation.v140)
+    implementation(libs.material.icons.core)
+    implementation(libs.material.icons.extended)
+    implementation(libs.wear.ongoing)
+    implementation(libs.wear.remote.interactions)
 }
