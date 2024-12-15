@@ -69,4 +69,6 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.material.icons.core)
     implementation(libs.material.icons.extended)
+    implementation(libs.wear.ongoing)
+    implementation(libs.wear.remote.interactions)
 }

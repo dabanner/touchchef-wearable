@@ -1,11 +1,6 @@
-/* While this template provides a good starting point for using Wear Compose, you can always
- * take a look at https://github.com/android/wear-os-samples/tree/main/ComposeStarter and
- * https://github.com/android/wear-os-samples/tree/main/ComposeAdvanced to find the most up to date
- * changes to the libraries and their usages.
- */
-
 package com.touchchef.wearable.presentation
 
+import TaskStatusScreen
 import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.Sensor
@@ -15,38 +10,69 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
+import android.Manifest
+import com.google.gson.Gson
 
 class MainActivity : ComponentActivity() {
     private val webSocketClient = WebSocketClient()
     private lateinit var bpmService: BpmService
     private lateinit var qrCodeGenerator: QRCodeGenerator;
     private lateinit var handRaiseDetector: HandRaiseDetector
+    private lateinit var taskHelpService: TaskHelpService
+    private lateinit var cookManagementService: CookManagementService
+
+    private val gson = Gson()
 
     private val BODY_SENSOR_PERMISSION_CODE = 100
+    private val NOTIFICATION_PERMISSION_CODE = 102
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
         installSplashScreen()
         qrCodeGenerator = QRCodeGenerator()
         qrCodeGenerator.initialize(baseContext)
-        super.onCreate(savedInstanceState)
+
+        // Get deviceId and wait until we have one
+        var deviceId = qrCodeGenerator.getCachedDeviceId()
+        while (deviceId.isEmpty()) {
+            Thread.sleep(100)  // Wait a bit
+            deviceId = qrCodeGenerator.getCachedDeviceId()
+        }
+
+        // Now we definitely have a deviceId
+        webSocketClient.initialize(deviceId)
+        initializeServices()
+
+        requestNotificationPermission()
         requestSensorPermission()
-        // Initialize BPM service
-        bpmService = BpmService(
-            webSocketClient,
-            getSystemService(Context.SENSOR_SERVICE) as SensorManager,
-            baseContext
-        )
+        setupNavigation()
+    }
 
-        // Start monitoring BPM
-        bpmService.startMonitoring()
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    NOTIFICATION_PERMISSION_CODE
+                )
+            }
+        }
+    }
 
+    private fun setupNavigation() {
         setTheme(android.R.style.Theme_DeviceDefault)
 
         setContent {
@@ -62,9 +88,8 @@ class MainActivity : ComponentActivity() {
                     WebSocketQRCode(
                         webSocketClient = webSocketClient,
                         context = baseContext,
-                        qrCodeGenerator,
+                        qrCodeGenerator = qrCodeGenerator,
                         navigateToConfirmationScreen = { name, avatar, deviceId ->
-
                             Log.d("MainActivity", "Navigating to confirmation screen")
                             runOnUiThread {
                                 navController.navigate("confirmationScreen/$name/$avatar/$deviceId")
@@ -73,20 +98,95 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                composable(
-                    "confirmationScreen/{name}/{avatar}/{deviceId}",
-                ) {
+                composable("confirmationScreen/{name}/{avatar}/{deviceId}") { backStackEntry ->
+                    val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
                     ConfirmationScreen(
                         webSocketClient = webSocketClient,
-                        deviceId = it.arguments?.getString("deviceId") ?: "null",
-                        name = it.arguments?.getString("name") ?: "Inconnu",
-                        avatar = it.arguments?.getString("avatar") ?: "default_avatar.png"
+                        deviceId = deviceId,
+                        name = backStackEntry.arguments?.getString("name") ?: "Inconnu",
+                        avatar = backStackEntry.arguments?.getString("avatar") ?: "default_avatar.png",
+                        onConfirmation = {
+                            navController.navigate("taskScreen/$deviceId") {
+                                popUpTo("qrcodeScreen") { inclusive = true }
+                            }
+                        }
                     )
                 }
 
+
+                composable("taskStatusScreen/{deviceId}/{taskId}") { backStackEntry ->
+                    val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
+                    val taskId = backStackEntry.arguments?.getString("taskId") ?: "null"
+                    TaskStatusScreen(
+                        onCancelled = {},
+                        onCompleted = {},
+                        onHelp = {
+                            navController.navigate("taskScreen/$deviceId") {
+                                popUpTo("qrcodeScreen") { inclusive = true }
+                            }
+                        },
+                        onBack = {},
+                    )
+                }
+
+                composable("taskScreen/{deviceId}") { backStackEntry ->
+                    val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
+                    Log.d("Task Device id", "device id : $deviceId")
+                    TaskScreen(
+                        taskHelpService = taskHelpService,
+                        cookManagementService = cookManagementService,
+                        deviceId = deviceId
+                    )
+                }
             }
         }
     }
+
+    private fun initializeServices() {
+        initializeBasicServices()
+        setupWebSocketConnection()
+        //startBPMMonitoring()
+    }
+
+    private fun initializeBasicServices() {
+        val deviceId = qrCodeGenerator.getCachedDeviceId()
+
+        cookManagementService = CookManagementService(webSocketClient, deviceId)
+        bpmService = BpmService(
+            webSocketClient,
+            getSystemService(Context.SENSOR_SERVICE) as SensorManager,
+            baseContext
+        )
+        taskHelpService = TaskHelpService(webSocketClient, deviceId, baseContext)
+    }
+
+    private fun startBPMMonitoring() {
+        lifecycleScope.launch {
+            bpmService.bpmFlow.collect { bpm ->
+                Log.d("MainActivity", "BPM Update: $bpm")
+            }
+        }
+        bpmService.startMonitoring()
+    }
+
+    private fun setupWebSocketConnection() {
+        webSocketClient.connect(
+            onConnected = {
+                Log.d("MainActivity", "WebSocket Connected")
+            },
+            onTaskMessage = { taskMessage ->
+                Log.d("MainActivity", "Received task message: $taskMessage")
+                taskHelpService.handleTaskMessage(taskMessage)
+            },
+            onMessage = { //message ->
+                //Log.d("MainActivity", "Received non-task message: $message")
+            },
+            onError = { error ->
+                Log.e("MainActivity", "WebSocket error: $error")
+            }
+        )
+    }
+
 
     private fun requestSensorPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -112,7 +212,6 @@ class MainActivity : ComponentActivity() {
     private fun initializeBpmService() {
         val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
-        // Check if the heart rate sensor exists
         val heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
         if (heartRateSensor == null) {
             Log.e("MainActivity", "No heart rate sensor found on this device")
@@ -123,13 +222,6 @@ class MainActivity : ComponentActivity() {
 
         bpmService = BpmService(webSocketClient, sensorManager, baseContext)
         bpmService.startMonitoring()
-
-        // Add a coroutine to monitor BPM values
-        lifecycleScope.launch {
-            bpmService.bpmFlow.collect { bpm ->
-                Log.d("MainActivity", "BPM Update: $bpm")
-            }
-        }
     }
 
     override fun onRequestPermissionsResult(

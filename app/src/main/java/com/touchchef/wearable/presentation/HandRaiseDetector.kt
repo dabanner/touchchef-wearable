@@ -38,6 +38,9 @@ class HandRaiseDetector(private val context: Context) {
             onMessage = { message ->
                 Log.d("HandRaiseDetector", "Received message: $message")
             },
+            onTaskMessage = {message ->
+                // fuycki ebwhouj ghfop
+            },
             onError = { error ->
                 Log.e("HandRaiseDetector", "WebSocket error: $error")
             }

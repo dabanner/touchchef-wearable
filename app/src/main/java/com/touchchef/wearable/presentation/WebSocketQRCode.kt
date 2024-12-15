@@ -78,6 +78,9 @@ fun WebSocketQRCode(
             },
             onError = { message ->
                 errorMessage.value = message
+            },
+            onTaskMessage = { taskMessage ->
+                Log.d("WebSocket", "Received task message: $taskMessage")
             }
         )
     }
