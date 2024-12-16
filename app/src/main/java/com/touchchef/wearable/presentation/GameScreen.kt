@@ -71,7 +71,8 @@ private fun EmptyTaskState(
                 text = "Pas de tâche\nattribuée",
                 textAlign = TextAlign.Center,
                 color = Color.White,
-                style = TextStyle(fontSize = 16.sp)
+                style = TextStyle(fontSize = 16.sp),
+                fontFamily = TouchChefTypography.bricolageGrotesque
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -139,7 +140,8 @@ private fun TaskContent(
                 text = icons,
                 color = Color.White,
                 style = TextStyle(fontSize = 24.sp),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                fontFamily = TouchChefTypography.bricolageGrotesque
             )
             Spacer(modifier = Modifier.height(8.dp))
         }

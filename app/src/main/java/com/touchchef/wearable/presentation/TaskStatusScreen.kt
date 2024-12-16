@@ -9,6 +9,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.*
+import com.touchchef.wearable.presentation.theme.TouchChefTypography
 
 @Composable
 fun TaskStatusScreen(
@@ -64,12 +65,14 @@ fun TaskStatusScreen(
                                     text = "Terminé",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF417E00)
+                                    color = Color(0xFF417E00),
+                                    fontFamily = TouchChefTypography.bricolageGrotesque
                                 )
                                 Text(
                                     text = "✅",
                                     fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = TouchChefTypography.bricolageGrotesque
                                 )
                             }
                         }
@@ -92,7 +95,8 @@ fun TaskStatusScreen(
                                     text = "Annulé",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = Color(0xFFFF2626)
+                                    color = Color(0xFFFF2626),
+                                    fontFamily = TouchChefTypography.bricolageGrotesque
                                 )
                                 Text(
                                     text = "❌",
@@ -120,7 +124,8 @@ fun TaskStatusScreen(
                                     text = "Aide",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF0084FF)
+                                    color = Color(0xFF0084FF),
+                                    fontFamily = TouchChefTypography.bricolageGrotesque
                                 )
                                 Text(
                                     text = "🤚",
@@ -147,7 +152,8 @@ fun TaskStatusScreen(
                                     text = "Retour",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF000000)
+                                    color = Color(0xFF000000),
+                                    fontFamily = TouchChefTypography.bricolageGrotesque
                                 )
                                 Text(
                                     text = "⬅️",
