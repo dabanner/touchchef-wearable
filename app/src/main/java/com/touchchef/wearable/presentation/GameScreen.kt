@@ -2,6 +2,7 @@ package com.touchchef.wearable.presentation
 
 import TaskStatusScreen
 import android.util.Log
+import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,15 +33,23 @@ import kotlin.math.abs
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment.Companion.TopEnd
+import androidx.compose.ui.geometry.Offset
 import androidx.navigation.NavHostController
+import com.touchchef.wearable.presentation.theme.TouchChefTypography
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.sin
 
 
 @Composable
@@ -81,16 +90,16 @@ private fun TaskProgressIndicator(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .fillMaxHeight()
+            .padding(start = 8.dp),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.Start
     ) {
         repeat(totalTasks) { index ->
             Box(
                 modifier = Modifier
-                    .padding(vertical = 2.dp)
-                    .width(4.dp)
-                    .height(16.dp)
+                    .size(8.dp)
                     .background(
                         color = if (index == currentTaskIndex)
                             Color.White
@@ -98,6 +107,7 @@ private fun TaskProgressIndicator(
                             Color.White.copy(alpha = 0.5f),
                         shape = CircleShape
                     )
+                    .padding(vertical = 6.dp)
             )
         }
     }
@@ -118,7 +128,8 @@ private fun TaskContent(
         Text(
             text = "Tâche en cours",
             color = Color.White,
-            style = TextStyle(fontSize = 16.sp)
+            style = TextStyle(fontSize = 16.sp),
+            fontFamily = TouchChefTypography.bricolageGrotesque
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -138,14 +149,16 @@ private fun TaskContent(
             color = Color.White,
             style = TextStyle(fontSize = 20.sp),
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp),
+            fontFamily = TouchChefTypography.bricolageGrotesque
         )
 
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "${currentTaskIndex + 1}/$totalTasks",
             color = Color.White.copy(alpha = 0.7f),
-            style = TextStyle(fontSize = 14.sp)
+            style = TextStyle(fontSize = 14.sp),
+            fontFamily = TouchChefTypography.bricolageGrotesque
         )
     }
 }
