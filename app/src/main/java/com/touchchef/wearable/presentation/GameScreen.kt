@@ -30,9 +30,260 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import kotlin.math.abs
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment.Companion.TopEnd
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+
+@Composable
+private fun EmptyTaskState(
+    avatarColor: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(parseColor("#$avatarColor")),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Pas de tâche\nattribuée",
+                textAlign = TextAlign.Center,
+                color = Color.White,
+                style = TextStyle(fontSize = 16.sp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "🤷",
+                style = TextStyle(fontSize = 24.sp)
+            )
+        }
+    }
+}
+
+// Component for showing task progress indicators
+@Composable
+private fun TaskProgressIndicator(
+    totalTasks: Int,
+    currentTaskIndex: Int,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        repeat(totalTasks) { index ->
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 2.dp)
+                    .width(4.dp)
+                    .height(16.dp)
+                    .background(
+                        color = if (index == currentTaskIndex)
+                            Color.White
+                        else
+                            Color.White.copy(alpha = 0.5f),
+                        shape = CircleShape
+                    )
+            )
+        }
+    }
+}
+
+// Component for displaying task content
+@Composable
+private fun TaskContent(
+    task: Task,
+    currentTaskIndex: Int,
+    totalTasks: Int,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Tâche en cours",
+            color = Color.White,
+            style = TextStyle(fontSize = 16.sp)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        task.taskIcons?.let { icons ->
+            Text(
+                text = icons,
+                color = Color.White,
+                style = TextStyle(fontSize = 24.sp),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        Text(
+            text = task.taskName,
+            color = Color.White,
+            style = TextStyle(fontSize = 20.sp),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "${currentTaskIndex + 1}/$totalTasks",
+            color = Color.White.copy(alpha = 0.7f),
+            style = TextStyle(fontSize = 14.sp)
+        )
+    }
+}
+@Composable
+private fun HandleGesturesBox(
+    currentTask: Task,
+    currentTaskIndex: Int,  // This is the actual current index
+    tasks: List<Task>,
+    onTaskChange: (Int) -> Unit,
+    showTaskStatus: MutableState<Boolean>,
+    content: @Composable BoxScope.() -> Unit
+) {
+    var dragOffset by remember { mutableStateOf(0f) }
+    var longPressJob by remember { mutableStateOf<Job?>(null) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(parseColor(currentTask.cook.color))
+            .pointerInput(Unit) {
+                coroutineScope {
+                    while (true) {
+                        awaitPointerEventScope {
+                            awaitFirstDown().also { down ->
+                                Log.d("GameScreen", "Touch Down Detected for task index: $currentTaskIndex")
+                                longPressJob?.cancel()
+                                longPressJob = launch {
+                                    delay(500)
+                                    if (dragOffset == 0f) {
+                                        Log.d("GameScreen", "Long Press Detected at index $currentTaskIndex - Showing Task Status")
+                                        showTaskStatus.value = true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .pointerInput(currentTaskIndex) { // Add currentTaskIndex as a key
+                detectVerticalDragGestures(
+                    onDragStart = {
+                        Log.d("GameScreen", "Drag Started at index $currentTaskIndex - Resetting offset")
+                        dragOffset = 0f
+                        longPressJob?.cancel()
+                    },
+                    onDragEnd = {
+                        Log.d("GameScreen", "Drag Ended - Final Offset: $dragOffset")
+                        Log.d("GameScreen", "Current Task Index before navigation: $currentTaskIndex")
+
+                        val minDragThreshold = 30f
+                        if (abs(dragOffset) > minDragThreshold) {
+                            when {
+                                dragOffset > 0 && currentTaskIndex > 0 -> {
+                                    val newIndex = currentTaskIndex - 1
+                                    Log.d("GameScreen", "Navigating to Previous Task: $newIndex from $currentTaskIndex")
+                                    onTaskChange(newIndex)
+                                }
+                                dragOffset < 0 && currentTaskIndex < tasks.size - 1 -> {
+                                    val newIndex = currentTaskIndex + 1
+                                    Log.d("GameScreen", "Navigating to Next Task: $newIndex from $currentTaskIndex")
+                                    onTaskChange(newIndex)
+                                }
+                                else -> {
+                                    Log.d("GameScreen", "Navigation not possible - At boundary: index=$currentTaskIndex, total=${tasks.size}")
+                                }
+                            }
+                        }
+                        dragOffset = 0f
+                    },
+                    onDragCancel = {
+                        Log.d("GameScreen", "Drag Cancelled at index $currentTaskIndex")
+                        dragOffset = 0f
+                    },
+                    onVerticalDrag = { change, dragAmount ->
+                        change.consume()
+                        dragOffset += dragAmount
+                        Log.d("GameScreen", "Dragging - Current Offset: $dragOffset, Current Index: $currentTaskIndex")
+                    }
+                )
+            }
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun TaskStatusOverlay(
+    currentTask: Task,
+    deviceId: String,
+    avatarColor: String,
+    showTaskStatus: MutableState<Boolean>,
+    onPopTask: () -> Unit,
+    webSocketClient: WebSocketClient,
+    navController: NavHostController
+) {
+    Log.d("GameScreen", "Showing Task Status Screen")
+    TaskStatusScreen(
+        avatarColor = avatarColor,
+        onCompleted = {
+            Log.d("GameScreen", "Task Completed - Sending finished message")
+            val message = mapOf(
+                "type" to "taskFinished",
+                "from" to deviceId,
+                "to" to "unity"
+            )
+            webSocketClient.sendJson(message) { success ->
+                Log.d("GameScreen", "Task finished message sent: $success")
+            }
+            onPopTask()
+            showTaskStatus.value = false
+        },
+        onCancelled = {
+            Log.d("GameScreen", "Task Cancelled - Sending unactive message")
+            val message = mapOf(
+                "type" to "unactiveTask",
+                "from" to deviceId,
+                "to" to "unity"
+            )
+            webSocketClient.sendJson(message) { success ->
+                Log.d("GameScreen", "Task unactive message sent: $success")
+            }
+            onPopTask()
+            showTaskStatus.value = false
+        },
+        onHelp = {
+            Log.d("GameScreen", "Help Requested - Navigating to task screen")
+            navController.navigate("taskScreen/$deviceId/${currentTask.taskName}") {
+                popUpTo("qrcodeScreen") { inclusive = true }
+                popUpTo("confirmationScreen") { inclusive = true }
+            }
+            showTaskStatus.value = false
+        },
+        onBack = {
+            Log.d("GameScreen", "Task Status Screen Closed")
+            showTaskStatus.value = false
+        }
+    )
+}
 
 @Composable
 fun GameScreen(
@@ -42,191 +293,63 @@ fun GameScreen(
     tasks: List<Task>,
     currentTaskIndex: Int,
     onTaskChange: (Int) -> Unit,
-    onPopTask: ()-> Unit,
+    onPopTask: () -> Unit,
     deviceId: String,
     avatarColor: String,
     navController: NavHostController
 ) {
-    var showTaskStatus by remember { mutableStateOf(false) }
+    var showTaskStatus = remember { mutableStateOf(false) }
+
+    LaunchedEffect(tasks, currentTaskIndex) {
+        Log.d("GameScreen", "Tasks State Updated - Count: ${tasks.size}, Current Index: $currentTaskIndex")
+        tasks.forEachIndexed { index, task ->
+            Log.d("GameScreen", "Task[$index]: ${task.taskName}, Icons: ${task.taskIcons}")
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Original GameScreen content
         if (tasks.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(parseColor("#$avatarColor")),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Pas de tâche\nattribuée",
-                        textAlign = TextAlign.Center,
-                        color = Color.White,
-                        style = TextStyle(fontSize = 16.sp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "🤷",
-                        style = TextStyle(fontSize = 24.sp)
-                    )
-                }
-            }
+            Log.d("GameScreen", "No tasks available")
+            EmptyTaskState(avatarColor = avatarColor)
         } else {
             val currentTask = tasks[currentTaskIndex]
-            var offsetY by remember { mutableStateOf(0f) }
-            var isScrollInProgress by remember { mutableStateOf(false) }
+            Log.d("GameScreen", "Displaying Current Task: ${currentTask.taskName}, Index: $currentTaskIndex")
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(parseColor(currentTask.cook.color))
-                    .pointerInput(Unit) {
-                        detectVerticalDragGestures(
-                            onDragStart = { isScrollInProgress = true },
-                            onDragEnd = {
-                                if (abs(offsetY) > 30 && isScrollInProgress) {
-                                    if (offsetY > 0 && currentTaskIndex > 0) {
-                                        onTaskChange(currentTaskIndex - 1)
-                                    } else if (offsetY < 0 && currentTaskIndex < tasks.size - 1) {
-                                        onTaskChange(currentTaskIndex + 1)
-                                    }
-                                }
-                                offsetY = 0f
-                                isScrollInProgress = false
-                            },
-                            onVerticalDrag = { change, dragAmount ->
-                                if (isScrollInProgress) {
-                                    offsetY += dragAmount
-                                    change.consume()
-                                }
-                            }
-                        )
-                    }
+            HandleGesturesBox(
+                currentTaskIndex = currentTaskIndex,
+                tasks = tasks,
+                currentTask = currentTask,
+                onTaskChange = onTaskChange,
+                showTaskStatus = showTaskStatus
             ) {
-                Column(
+                TaskProgressIndicator(
+                    totalTasks = tasks.size,
+                    currentTaskIndex = currentTaskIndex,
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 8.dp)
+                )
+
+                TaskContent(
+                    task = currentTask,
+                    currentTaskIndex = currentTaskIndex,
+                    totalTasks = tasks.size,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.TopEnd
-                    ) {
-                        Text(
-                            text = "*️⃣",
-                            modifier = Modifier
-                                .clickable { showTaskStatus = true }
-                                .padding(8.dp),
-                            style = TextStyle(fontSize = 20.sp),
-                            color = Color.White
-                        )
-                    }
-
-                    Text(
-                        text = "Tâche en cours",
-                        color = Color.White,
-                        style = TextStyle(fontSize = 16.sp)
-                    )
-
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.padding(vertical = 16.dp)
-                    ) {
-                        repeat(tasks.size) { index ->
-                            Box(
-                                modifier = Modifier
-                                    .width(8.dp)
-                                    .height(8.dp)
-                                    .background(
-                                        color = if (index == currentTaskIndex)
-                                            Color.White
-                                        else
-                                            Color.White.copy(alpha = 0.5f),
-                                        shape = CircleShape
-                                    )
-                            )
-                            if (index < tasks.size - 1) {
-                                Spacer(modifier = Modifier.width(4.dp))
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text(
-                        text = currentTask.taskName,
-                        color = Color.White,
-                        style = TextStyle(fontSize = 20.sp),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Chef: ${currentTask.cook.name}",
-                        color = Color.White,
-                        style = TextStyle(fontSize = 16.sp)
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text(
-                        text = "${currentTaskIndex + 1}/${tasks.size}",
-                        color = Color.White.copy(alpha = 0.7f),
-                        style = TextStyle(fontSize = 14.sp)
-                    )
-                }
+                        .padding(start = 24.dp, end = 16.dp, top = 16.dp, bottom = 16.dp)
+                )
             }
         }
 
-        // Overlay TaskStatusScreen when showTaskStatus is true
-        if (showTaskStatus && tasks.isNotEmpty()) {
-            val currentTask = tasks[currentTaskIndex]
-            TaskStatusScreen(
+        if (showTaskStatus.value && tasks.isNotEmpty()) {
+            TaskStatusOverlay(
+                currentTask = tasks[currentTaskIndex],
+                deviceId = deviceId,
                 avatarColor = avatarColor,
-                onCompleted = {
-                    val message = mapOf(
-                        "type" to "taskFinished",
-                        "from" to deviceId,
-                        "to" to "unity"
-                    )
-                    webSocketClient.sendJson(message) { success ->
-                        if (success) {
-                            Log.d("WebSocket", "sent $message")
-                        } else {
-                            Log.e("WebSocket", "Failed to send message")
-                        }
-                    }
-                    onPopTask()
-                    showTaskStatus = false
-                },
-                onCancelled = {
-                    val message = mapOf(
-                        "type" to "unactiveTask",
-                        "from" to deviceId,
-                        "to" to "unity"
-                    )
-                    webSocketClient.sendJson(message) { success ->
-                        if (success) {
-                            Log.d("WebSocket", "sent $message")
-                        } else {
-                            Log.e("WebSocket", "Failed to send message")
-                        }
-                    }
-                    onPopTask()
-                    showTaskStatus = false
-                },
-                onHelp = {
-                    navController.navigate("taskScreen/$deviceId/${currentTask.taskName}") {
-                        popUpTo("qrcodeScreen") { inclusive = true }
-                        popUpTo("confirmationScreen") { inclusive = true }
-                    }
-                    showTaskStatus = false
-                },
-                onBack = {
-                    showTaskStatus = false
-                }
+                showTaskStatus = showTaskStatus,
+                onPopTask = onPopTask,
+                webSocketClient = webSocketClient,
+                navController = navController
             )
         }
     }

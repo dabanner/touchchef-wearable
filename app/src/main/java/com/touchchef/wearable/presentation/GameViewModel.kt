@@ -1,24 +1,17 @@
 package com.touchchef.wearable.presentation
 
-import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.touchchef.wearable.data.DevicePreferences
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-
-// Updated data classes for the message format
 
 data class AssignedTask(
     val taskName: String,
     val cook: Cook,
     val taskId: String,
     val quantity: String,
-    val workStation: String
+    val workStation: String,
+    val taskIcons: String? = null
 )
 
 data class Cook(
@@ -28,13 +21,13 @@ data class Cook(
     val color: String
 )
 
-// Updated Task class to store all necessary information
 data class Task(
     val taskName: String,
     val cook: Cook,
     val taskId: String,
     val quantity: String,
-    val workstation: String
+    val workstation: String,
+    val taskIcons: String? = null
 )
 
 class GameViewModel(
@@ -48,87 +41,113 @@ class GameViewModel(
     val currentTaskIndex: Int get() = _currentTaskIndex.value
 
     fun popActiveTask() {
+        Log.d("GameViewModel", "Attempting to pop active task at index $currentTaskIndex. Total tasks: ${_tasks.size}")
+
         if (_tasks.isNotEmpty() && currentTaskIndex < _tasks.size) {
             // Remove the current task
+            val removedTask = _tasks[currentTaskIndex]
             _tasks.removeAt(currentTaskIndex)
+            Log.d("GameViewModel", "Removed task: ${removedTask.taskName}")
 
             // Adjust the current index if necessary
             if (currentTaskIndex >= _tasks.size) {
-                _currentTaskIndex.value = maxOf(_tasks.size - 1, 0)
+                val newIndex = maxOf(_tasks.size - 1, 0)
+                Log.d("GameViewModel", "Adjusting currentTaskIndex from $currentTaskIndex to $newIndex")
+                _currentTaskIndex.value = newIndex
             }
 
             // If there are remaining tasks, send activeTask message for the new current task
             if (_tasks.isNotEmpty()) {
+                val currentTask = _tasks[currentTaskIndex]
                 val message = mapOf(
                     "type" to "activeTask",
                     "from" to deviceId,
                     "to" to "table",
-                    "assignedTask" to tasks[currentTaskIndex]
+                    "assignedTask" to currentTask
                 )
                 webSocketClient.sendJson(message) { success ->
-                    if (success) {
-                        Log.d("GameViewModel", "New active task sent successfully")
-                    } else {
-                        Log.e("GameViewModel", "Failed to send new active task")
-                    }
+                    Log.d("GameViewModel", "Active task update after pop: ${if (success) "success" else "failed"} for task: ${currentTask.taskName}")
                 }
+            } else {
+                Log.d("GameViewModel", "No tasks remaining after pop")
             }
+        } else {
+            Log.e("GameViewModel", "Cannot pop task: tasks empty or invalid index")
         }
     }
 
     fun onTaskChange(newIndex: Int) {
-        if (newIndex in 0 until _tasks.size) {
+        Log.d("GameViewModel", "Task change requested: current index=${_currentTaskIndex.value}, new index=$newIndex, total tasks=${_tasks.size}")
+
+        if (newIndex in 0 until _tasks.size && newIndex != _currentTaskIndex.value) {
+            Log.d("GameViewModel", "Updating current task index to $newIndex")
             _currentTaskIndex.value = newIndex
-            val message = mapOf("type" to "activeTask",
+
+            val currentTask = _tasks[newIndex]
+            Log.d("GameViewModel", "Switching to task: ${currentTask.taskName}")
+
+            val message = mapOf(
+                "type" to "activeTask",
                 "from" to deviceId,
                 "to" to "table",
-                "assignedTask" to tasks[currentTaskIndex]
+                "assignedTask" to currentTask
             )
+
             webSocketClient.sendJson(message) { success ->
                 if (success) {
-                    Log.d("HandRaiseDetector", "Hand raise event sent successfully")
+                    Log.d("GameViewModel", "Task change successful: Index=$newIndex, Task=${currentTask.taskName}")
                 } else {
-                    Log.e("HandRaiseDetector", "Failed to send hand raise event")
+                    Log.e("GameViewModel", "Failed to send task change notification")
                 }
             }
+        } else {
+            Log.d("GameViewModel", "Invalid task change request - Index=$newIndex (current=${_currentTaskIndex.value}, total=${_tasks.size})")
         }
     }
 
     init {
+        Log.d("GameViewModel", "Initializing GameViewModel for device: $deviceId")
+
         webSocketClient.setMessageListener { message ->
             when {
                 message.type == "addTask" && message.to == deviceId -> {
                     message.assignedTask?.let { assignedTask ->
+                        Log.d("GameViewModel", "Received new task: ${assignedTask.taskName}")
+
                         val newTask = Task(
                             taskName = assignedTask.taskName,
                             cook = assignedTask.cook,
                             taskId = assignedTask.taskId,
                             quantity = assignedTask.quantity,
-                            workstation = assignedTask.workStation
+                            workstation = assignedTask.workStation,
+                            taskIcons = assignedTask.taskIcons
                         )
-                        // Check if task already exists
-                        if (!_tasks.any { existingTask ->
-                                existingTask.taskName == newTask.taskName &&
-                                        existingTask.cook.deviceId == newTask.cook.deviceId
-                            }) {
+
+                        val taskExists = _tasks.any { it.taskId == newTask.taskId }
+                        if (!taskExists) {
                             _tasks.add(newTask)
-                            if (_tasks.size == 1) {
-                                val losMessage = mapOf("type" to "activeTask",
+                            Log.d("GameViewModel", "Added new task. Total tasks: ${_tasks.size}")
+
+                            val isFirstTask = _tasks.size == 1
+                            if (isFirstTask) {
+                                val activeTaskMessage = mapOf(
+                                    "type" to "activeTask",
                                     "from" to deviceId,
                                     "to" to "table",
                                     "assignedTask" to newTask
                                 )
-                                webSocketClient.sendJson(losMessage) { success ->
-                                    if (success) {
-                                        Log.d("HandRaiseDetector", "Hand raise event sent successfully")
-                                    } else {
-                                        Log.e("HandRaiseDetector", "Failed to send hand raise event")
-                                    }
+                                webSocketClient.sendJson(activeTaskMessage) { success ->
+                                    val resultMessage = if (success) "sent" else "failed"
+                                    Log.d(
+                                        "GameViewModel",
+                                        "Initial active task notification: $resultMessage"
+                                    )
                                 }
+                            } else {
+                                Log.d("GameViewModel", "Not the first task, no notification needed")
                             }
-                            Log.d("addTask", "Added new task: $newTask")
                         } else {
-                            Log.d("addTask", "Task already exists, skipping: $newTask")
+                            Log.d("GameViewModel", "Skipped duplicate task: ${newTask.taskId}")
                         }
                     }
                 }
