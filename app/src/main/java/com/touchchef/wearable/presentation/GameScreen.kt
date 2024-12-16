@@ -36,6 +36,8 @@ import androidx.navigation.NavHostController
 
 @Composable
 fun GameScreen(
+    taskHelpService: TaskHelpService,
+    cookManagementService: CookManagementService,
     webSocketClient: WebSocketClient,
     tasks: List<Task>,
     currentTaskIndex: Int,
@@ -216,7 +218,10 @@ fun GameScreen(
                     showTaskStatus = false
                 },
                 onHelp = {
-                    navController.navigate("taskScreen/${deviceId}/${currentTask.taskName}")
+                    navController.navigate("taskScreen/$deviceId/${currentTask.taskName}") {
+                        popUpTo("qrcodeScreen") { inclusive = true }
+                        popUpTo("confirmationScreen") { inclusive = true }
+                    }
                     showTaskStatus = false
                 },
                 onBack = {

@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var handRaiseDetector: HandRaiseDetector
     private lateinit var taskHelpService: TaskHelpService
     private lateinit var cookManagementService: CookManagementService
+    private lateinit var gameViewModel: GameViewModel
 
     private val gson = Gson()
     private lateinit var deviceId: String
@@ -144,10 +145,12 @@ class MainActivity : ComponentActivity() {
                 ) { backStackEntry ->
                     val deviceId = backStackEntry.arguments?.getString("deviceId") ?: ""
                     val avatarColor = backStackEntry.arguments?.getString("avatarColor") ?: "ffffff"
-                    val gameViewModel = remember {
-                        GameViewModel(webSocketClient, deviceId = deviceId)
+                    if (!::gameViewModel.isInitialized) {
+                        gameViewModel = GameViewModel(webSocketClient, deviceId)
                     }
                     GameScreen(
+                        taskHelpService = taskHelpService,
+                        cookManagementService = cookManagementService,
                         webSocketClient = webSocketClient,
                         tasks = gameViewModel.tasks,
                         currentTaskIndex = gameViewModel.currentTaskIndex,
