@@ -24,6 +24,22 @@ class CookManagementService(
     }
 
     private fun connectToWebSocket() {
+
+        webSocketClient.setMessageListener { webSocketMessage ->
+            Log.d("WebSocket", "Received message: $webSocketMessage")
+
+            // Check if message is for this device
+            if (webSocketMessage.to == cachedDeviceId && webSocketMessage.type == "addCook") {
+                // Get cook info
+                val name = webSocketMessage.name as? String ?: "Inconnu"
+                val avatar = webSocketMessage.avatar as? String ?: "a.png"
+                val avatarColor = webSocketMessage.avatarColor as? String ?: "ffffff"
+
+                // Navigate to confirmation screen
+                navigateToConfirmationScreen(name, avatar, cachedDeviceId, avatarColor)
+            }
+        }
+
         webSocketClient.connect(
             onConnected = {
                 Log.d(TAG, "WebSocket connected")

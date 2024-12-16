@@ -79,24 +79,14 @@ fun ConfirmationScreen(
             feedbackManager.playSuccessFeedback()
             hasPlayedFeedback = true
         }
-        webSocketClient.connect(
-            onConnected = {
-            },
-            onMessage = { message ->
-                Log.d("WebSocket", "Received message: $message")
-                // Désérialisation du message
-                val response = gson.fromJson(message, Map::class.java)
-                val type = response["type"] as? String
 
-                if (type == "startGame") {
-                    navigateToGameScreen()
-                }
-            },
-            onTaskMessage = {_ ->
-                            },
-            onError = {_ ->
-            }
-        )
+         webSocketClient.setMessageListener { webSocketMessage ->
+             Log.d("WebSocket", "Received message: $webSocketMessage")
+
+             when (webSocketMessage.type) {
+                 "startGame" -> navigateToGameScreen()
+             }
+         }
     }
 
     // Cleanup lors de la destruction du composable

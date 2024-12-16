@@ -13,7 +13,10 @@ data class WebSocketMessage(
     val from: String,
     val to: String,
     val type: String,
-    val assignedTask: AssignedTask? = null
+    val assignedTask: AssignedTask? = null,
+    val name: String?,
+    val avatar: String?,
+    val avatarColor: String?,
 )
 
 data class TaskData(
@@ -39,11 +42,14 @@ class WebSocketClient {
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
 
 
-
     fun initialize(deviceId: String) {
-        Log.d("WebSocketClient", "Device ID : ${deviceId}")
+        if (webSocket != null) {
+            Log.d("WebSocketClient", "WebSocket instance already exists, skipping initialization")
+            return
+        }
+
+        Log.d("WebSocketClient", "Initializing new WebSocket instance with deviceId: $deviceId")
         this.deviceId = deviceId
-        Log.d("WebSocketClient", "Initialized with deviceId: $deviceId")
     }
 
     private var messageListener: ((WebSocketMessage) -> Unit)? = null
