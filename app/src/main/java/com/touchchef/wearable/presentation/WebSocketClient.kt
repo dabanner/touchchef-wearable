@@ -23,7 +23,7 @@ data class TaskData(
 
 // Updated WebSocketClient
 class WebSocketClient {
-    private val serverUrl = "ws://websocket.chhilif.com/ws"
+    private val serverUrl = "wss://websocket.chhilif.com/ws"
     private var webSocket: WebSocket? = null
     private val gson = Gson()
     var isConnected = false
