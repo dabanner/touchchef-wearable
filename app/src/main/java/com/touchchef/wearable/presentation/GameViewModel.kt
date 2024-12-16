@@ -47,6 +47,35 @@ class GameViewModel(
     private val _currentTaskIndex = mutableStateOf(0)
     val currentTaskIndex: Int get() = _currentTaskIndex.value
 
+    fun popActiveTask() {
+        if (_tasks.isNotEmpty() && currentTaskIndex < _tasks.size) {
+            // Remove the current task
+            _tasks.removeAt(currentTaskIndex)
+
+            // Adjust the current index if necessary
+            if (currentTaskIndex >= _tasks.size) {
+                _currentTaskIndex.value = maxOf(_tasks.size - 1, 0)
+            }
+
+            // If there are remaining tasks, send activeTask message for the new current task
+            if (_tasks.isNotEmpty()) {
+                val message = mapOf(
+                    "type" to "activeTask",
+                    "from" to deviceId,
+                    "to" to "table",
+                    "assignedTask" to tasks[currentTaskIndex]
+                )
+                webSocketClient.sendJson(message) { success ->
+                    if (success) {
+                        Log.d("GameViewModel", "New active task sent successfully")
+                    } else {
+                        Log.e("GameViewModel", "Failed to send new active task")
+                    }
+                }
+            }
+        }
+    }
+
     fun onTaskChange(newIndex: Int) {
         if (newIndex in 0 until _tasks.size) {
             _currentTaskIndex.value = newIndex

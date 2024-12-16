@@ -153,60 +153,13 @@ class MainActivity : ComponentActivity() {
                         currentTaskIndex = gameViewModel.currentTaskIndex,
                         avatarColor = avatarColor,
                         deviceId=deviceId,
+                        navController = navController,
                         onTaskChange = { newIndex ->
                             gameViewModel.onTaskChange(newIndex)
                         },
-                        onNavigateToTaskStatus = { deviceId, taskName,avatarColor ->
-                            navController.navigate("taskStatusScreen/$deviceId/$taskName/$avatarColor") {
-                                popUpTo("qrcodeScreen") { inclusive = true }
-                                popUpTo("confirmationScreen") { inclusive = true }
-                            }
+                        onPopTask = {
+                            gameViewModel.popActiveTask()
                         }
-                    )
-                }
-
-
-                composable("taskStatusScreen/{deviceId}/{taskName}/{avatarColor}") { backStackEntry ->
-                    val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
-                    val taskName = backStackEntry.arguments?.getString("taskName") ?: "null"
-                    val avatarColor = backStackEntry.arguments?.getString("avatarColor") ?: "ffffff"
-                    TaskStatusScreen(
-                        avatarColor = avatarColor,
-                        onCancelled = {
-                            val message = mapOf("type" to "unactiveTask",
-                                "from" to deviceId,
-                                "to" to "unity"
-                                )
-                            webSocketClient.sendJson( message,  onResult = { success ->
-                                if (success) {
-                                    Log.d("WebSocket", "sent $message")
-                                } else {
-                                    Log.e("WebSocket", "Failed to send message")
-                                }
-                            })
-                        },
-                        onCompleted = {
-                            val message = mapOf("type" to "taskFinished",
-                                "from" to deviceId,
-                                "to" to "unity"
-                            )
-                            webSocketClient.sendJson( message,  onResult = { success ->
-                                if (success) {
-                                    Log.d("WebSocket", "sent $message")
-                                } else {
-                                    Log.e("WebSocket", "Failed to send message")
-                                }
-                            })
-                        },
-                        onHelp = {
-                            navController.navigate("taskScreen/$deviceId/$taskName") {
-                                popUpTo("qrcodeScreen") { inclusive = true }
-                                popUpTo("confirmationScreen") { inclusive = true }
-                            }
-                        },
-                        onBack = {
-                            navController.popBackStack()
-                        },
                     )
                 }
 
