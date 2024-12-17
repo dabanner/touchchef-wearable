@@ -75,15 +75,13 @@ class HandRaiseDetector(private val context: Context, private val webSocketClien
                 // Send WebSocket message only when state changes
                 if (isHandRaised != lastHandRaiseState) {
                     lastHandRaiseState = isHandRaised
-                    if (isHandRaised) {
-                        sendHandRaiseEvent()
-                    }
+                    sendHandRaiseEvent(isHandRaised)
                 }
             }
         }
     }
 
-    private fun sendHandRaiseEvent() {
+    private fun sendHandRaiseEvent(isHandRaised: Boolean) {
         coroutineScope.launch {
             if (devicePreferences == null) {
                 devicePreferences = DevicePreferences(context)
@@ -95,6 +93,7 @@ class HandRaiseDetector(private val context: Context, private val webSocketClien
                 "from" to deviceId,
                 "to" to "angular",
                 "type" to "handRaise",
+                "raised" to isHandRaised,
                 "timestamp" to System.currentTimeMillis()
             )
 
