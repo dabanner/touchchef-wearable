@@ -11,7 +11,6 @@ class CookManagementService(
 ) {
     private val _cooksFlow = MutableStateFlow<List<Cook>>(emptyList())
     val cooksFlow: StateFlow<List<Cook>> = _cooksFlow
-    private val gson = Gson()
 
     companion object {
         private const val TAG = "CookManagementService"
@@ -28,51 +27,15 @@ class CookManagementService(
         webSocketClient.setMessageListener { webSocketMessage ->
             Log.d("WebSocket", "Received message: $webSocketMessage")
 
-            // Check if message is for this device
-            if (webSocketMessage.to == cachedDeviceId && webSocketMessage.type == "addCook") {
-                // Get cook info
-                val name = webSocketMessage.name as? String ?: "Inconnu"
-                val avatar = webSocketMessage.avatar as? String ?: "a.png"
-                val avatarColor = webSocketMessage.avatarColor as? String ?: "ffffff"
-
-                // Navigate to confirmation screen
-                navigateToConfirmationScreen(name, avatar, cachedDeviceId, avatarColor)
+            if (webSocketMessage.type == MESSAGE_TYPE_COOKS_LIST && webSocketMessage.from == MESSAGE_SOURCE_ANGULAR) {
+                updateCooksList(webSocketMessage)
             }
-        }
-
-        webSocketClient.connect(
-            onConnected = {
-                Log.d(TAG, "WebSocket connected")
-            },
-            onTaskMessage = { taskMessage ->
-                Log.d(TAG, "Received task message: $taskMessage")
-            },
-            onMessage = { message ->
-                handleWebSocketMessage(message)
-            },
-            onError = { error ->
-                Log.e(TAG, "WebSocket error: $error")
-            }
-        )
-    }
-
-    private fun handleWebSocketMessage(message: String) {
-        try {
-            val messageMap = gson.fromJson(message, Map::class.java) as? Map<String, Any>
-            val type = messageMap?.get("type") as? String
-            val from = messageMap?.get("from") as? String
-
-            if (type == MESSAGE_TYPE_COOKS_LIST && from == MESSAGE_SOURCE_ANGULAR) {
-                updateCooksList(messageMap)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error processing message", e)
         }
     }
 
-    private fun updateCooksList(messageMap: Map<String, Any>) {
+    private fun updateCooksList(messageMap: WebSocketMessage) {
         try {
-            val cooksListData = messageMap["cooksList"] as? List<Map<String, Any>>
+            val cooksListData = messageMap.cooksList
             val cooksList = cooksListData?.mapNotNull { cookData -> createCookFromData(cookData) }
                 ?.filterNot { it.deviceId == deviceId } // Filter out current device
                 ?: emptyList()

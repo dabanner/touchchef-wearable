@@ -17,6 +17,7 @@ data class WebSocketMessage(
     val name: String?,
     val avatar: String?,
     val avatarColor: String?,
+    val cooksList: List<Map<String, Any>>?
 )
 
 data class TaskData(
