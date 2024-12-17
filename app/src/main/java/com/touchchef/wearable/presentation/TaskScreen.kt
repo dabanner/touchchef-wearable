@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.*
 import androidx.wear.compose.material.dialog.Dialog
+import com.touchchef.wearable.presentation.theme.TouchChefTypography
 
 @Composable
 fun TaskScreen(
@@ -169,7 +170,8 @@ private fun ActiveTaskSection(
                     Text(
                         text = "Tâche - ${helpRequest.taskId} -",
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = TouchChefTypography.bricolageGrotesque
                     )
                 }
 
@@ -179,7 +181,8 @@ private fun ActiveTaskSection(
                     text = "Tâche avec ${otherCook?.name ?: "Inconnu"}",
                     fontSize = 10.sp,
                     color = Color.LightGray,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    fontFamily = TouchChefTypography.bricolageGrotesque
                 )
             }
         }
@@ -223,7 +226,8 @@ private fun TaskActionsDialog(
                     text = "Actions",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    fontFamily = TouchChefTypography.bricolageGrotesque
                 )
 
                 Button(
@@ -240,7 +244,8 @@ private fun TaskActionsDialog(
                         Text(
                             "Terminer la tâche",
                             fontSize = 12.sp,
-                            color = Color(0xFF417E00)
+                            color = Color(0xFF417E00),
+                            fontFamily = TouchChefTypography.bricolageGrotesque
                         )
                         Text("✅", fontSize = 12.sp)
                     }
@@ -260,7 +265,8 @@ private fun TaskActionsDialog(
                         Text(
                             "Annuler l'aide",
                             fontSize = 12.sp,
-                            color = Color(0xFFFF2626)
+                            color = Color(0xFFFF2626),
+                            fontFamily = TouchChefTypography.bricolageGrotesque
                         )
                         Text("❌", fontSize = 12.sp)
                     }
@@ -280,7 +286,8 @@ private fun TaskActionsDialog(
                         Text(
                             "Retour",
                             fontSize = 12.sp,
-                            color = Color(0xFF000000)
+                            color = Color(0xFF000000),
+                            fontFamily = TouchChefTypography.bricolageGrotesque
                         )
                         Text("⬅️", fontSize = 12.sp)
                     }
@@ -312,13 +319,14 @@ private fun PendingRequestsSection(
             Text(
                 text = "Demandes :",
                 fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                fontFamily = TouchChefTypography.bricolageGrotesque
             )
             if (incomingCount > 0 || outgoingCount > 0) {
                 Text(
                     text = "Reçues: $incomingCount  |  Envoyées: $outgoingCount",
                     fontSize = 10.sp,
-                    color = Color.Gray
+                    fontFamily = TouchChefTypography.bricolageGrotesque
                 )
             }
         }
@@ -341,7 +349,8 @@ private fun ActionButtonsSection(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Aide spécifique", fontSize = 10.sp,color = Color(0xFF0084FF))
+                    Text("Aide spécifique", fontSize = 10.sp,color = Color(0xFF0084FF),
+                        fontFamily = TouchChefTypography.bricolageGrotesque)
                 }
             },
             onClick = onSpecificHelpClick,
@@ -366,7 +375,8 @@ private fun ActionButtonsSection(
                     text = "Retour",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(0xFF000000)
+                    color = Color(0xFF000000),
+                    fontFamily = TouchChefTypography.bricolageGrotesque
                 )
                 Text(
                     text = "⬅️",
@@ -417,14 +427,16 @@ private fun PendingRequestsDialog(
                 Text(
                     text = "Demandes en attente",
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = TouchChefTypography.bricolageGrotesque
                 )
 
                 if (incomingRequests.isEmpty() && outgoingRequests.isEmpty()) {
                     Text(
                         text = "Aucune demande",
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = Color.Gray,
+                        fontFamily = TouchChefTypography.bricolageGrotesque
                     )
                 } else {
                     if (incomingRequests.isNotEmpty()) {
@@ -432,7 +444,8 @@ private fun PendingRequestsDialog(
                             text = "Demandes reçues",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            fontFamily = TouchChefTypography.bricolageGrotesque
                         )
                         incomingRequests.forEach { request ->
                             RequestRow(
@@ -449,7 +462,8 @@ private fun PendingRequestsDialog(
                             text = "Demandes envoyées",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            fontFamily = TouchChefTypography.bricolageGrotesque
                         )
                         outgoingRequests.forEach { request ->
                             RequestRow(
@@ -481,19 +495,22 @@ private fun RequestRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "Tâche #${request.taskId}",
-                fontSize = 12.sp
+                fontSize = 12.sp,
+                fontFamily = TouchChefTypography.bricolageGrotesque
             )
             if (showActions) {
                 Text(
                     text = "De: ${request.from}",
                     fontSize = 10.sp,
-                    color = Color.Gray
+                    color = Color.Gray,
+                    fontFamily = TouchChefTypography.bricolageGrotesque
                 )
             } else {
                 Text(
                     text = "Vers: ${request.to}",
                     fontSize = 10.sp,
-                    color = Color.Gray
+                    color = Color.Gray,
+                    fontFamily = TouchChefTypography.bricolageGrotesque
                 )
             }
         }
@@ -540,7 +557,8 @@ private fun CookSelectionDialog(
                     text = "Choisir un cuisinier",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    fontFamily = TouchChefTypography.bricolageGrotesque
                 )
 
                 cooks.forEach { cook ->
