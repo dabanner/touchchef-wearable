@@ -47,43 +47,32 @@ fun WebSocketQRCode(
 
     LaunchedEffect(Unit) {
         devicePreferences.deviceId.first()?.let {cachedDeviceId = it}
-        webSocketClient.connect(
-            onConnected = {
-                val message = mapOf("type" to "testConnection")
-                webSocketClient.sendJson( message,  onResult = { success ->
-                    if (success) {
-                        isConnected.value = true
-                        Log.d("WebSocket", "Connected to WebSocket server")
-                    } else {
-                        errorMessage.value = "Erreur : Veuillez vous connecter au réseau WiFi du chef cuisinier."
-                        Log.e("WebSocket", "Failed to send message")
-                    }
-                })
-            },
-            onMessage = { message ->
-                Log.d("WebSocket", "Received message: $message")
-                // Désérialisation du message
-                val response = gson.fromJson(message, Map::class.java)
-                val to = response["to"] as? String
-                val type = response["type"] as? String
 
-                // Vérification si le `to` correspond à notre `deviceId`
-                if (to == cachedDeviceId && type == "addCook") {
-                    // On reçoit les infos du cuisinier
-                    val name = response["name"] as? String ?: "Inconnu"
-                    val avatar = response["avatar"] as? String ?: "a.png"
-                    val avatarColor = response["avatarColor"] as? String ?: "ffffff"
-                    // On navigue vers l'écran de confirmation avec le nom et l'avatar
-                    navigateToConfirmationScreen(name, avatar, cachedDeviceId, avatarColor)
-                }
-            },
-            onError = { message ->
-                errorMessage.value = message
-            },
-            onTaskMessage = { taskMessage ->
-                Log.d("WebSocket", "Received task message: $taskMessage")
+        val message = mapOf("type" to "testConnection")
+        webSocketClient.sendJson( message,  onResult = { success ->
+            if (success) {
+                isConnected.value = true
+                Log.d("WebSocket", "Connected to WebSocket server")
+            } else {
+                errorMessage.value = "Erreur : Veuillez vous connecter au réseau WiFi du chef cuisinier."
+                Log.e("WebSocket", "Failed to send message")
             }
-        )
+        })
+
+        webSocketClient.setMessageListener { webSocketMessage ->
+           Log.d("WebSocket", "Received message: $webSocketMessage")
+
+           // Check if message is for this device
+           if (webSocketMessage.to == cachedDeviceId && webSocketMessage.type == "addCook") {
+               // Get cook info
+               val name = webSocketMessage.name as? String ?: "Inconnu"
+               val avatar = webSocketMessage.avatar as? String ?: "a.png"
+               val avatarColor = webSocketMessage.avatarColor as? String ?: "ffffff"
+
+               // Navigate to confirmation screen
+               navigateToConfirmationScreen(name, avatar, cachedDeviceId, avatarColor)
+           }
+        }
     }
     Box(
         modifier = Modifier

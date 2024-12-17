@@ -25,27 +25,6 @@ class HandRaiseDetector(private val context: Context, private val webSocketClien
     // Get the accelerometer sensor
     private val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
-    init {
-        connectWebSocket()
-    }
-
-    private fun connectWebSocket() {
-        webSocketClient.connect(
-            onConnected = {
-                Log.d("HandRaiseDetector", "WebSocket Connected")
-            },
-            onMessage = { message ->
-                Log.d("HandRaiseDetector", "Received message: $message")
-            },
-            onTaskMessage = {message ->
-                // fuycki ebwhouj ghfop
-            },
-            onError = { error ->
-                Log.e("HandRaiseDetector", "WebSocket error: $error")
-            }
-        )
-    }
-
     // Create sensor event listener
     private val sensorEventListener = object : SensorEventListener {
         private val Y_THRESHOLD = -7.0f
