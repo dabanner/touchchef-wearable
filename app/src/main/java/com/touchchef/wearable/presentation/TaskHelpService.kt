@@ -101,7 +101,6 @@ class TaskHelpService(
 
         }
 
-
         when (messageType) {
 
             "help_request" -> {
