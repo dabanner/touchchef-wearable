@@ -152,8 +152,6 @@ class MainActivity : ComponentActivity() {
                             gameViewModel = GameViewModel(webSocketClient, deviceId)
                         }
                         GameScreen(
-                            taskHelpService = taskHelpService,
-                            cookManagementService = cookManagementService,
                             webSocketClient = webSocketClient,
                             tasks = gameViewModel.tasks,
                             currentTaskIndex = gameViewModel.currentTaskIndex,
