@@ -13,11 +13,17 @@ data class WebSocketMessage(
     val from: String,
     val to: String,
     val type: String,
+    val timer: Timer? = null,
     val assignedTask: AssignedTask? = null,
     val name: String?,
     val avatar: String?,
     val avatarColor: String?,
     val cooksList: List<Map<String, Any>>?
+)
+
+data class Timer(
+    val timerId: String,
+    val timerDuration: String
 )
 
 data class TaskData(

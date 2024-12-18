@@ -3,9 +3,6 @@ package com.touchchef.wearable.presentation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,7 +17,9 @@ import androidx.wear.compose.material.Text
 import kotlinx.coroutines.delay
 
 @Composable
-fun CallStyleTimer(numOfSeconds: Int) {
+fun CallStyleTimer(numOfSeconds: Int,
+                   onTimerFinish: () -> Unit = {}
+                   ) {
     var remainingSeconds by remember { mutableStateOf(numOfSeconds) }
     var isRunning by remember { mutableStateOf(false) }
 
@@ -28,6 +27,9 @@ fun CallStyleTimer(numOfSeconds: Int) {
         while (isRunning && remainingSeconds > 0) {
             delay(1000)
             remainingSeconds--
+            if (remainingSeconds == 0) {
+                onTimerFinish()
+            }
         }
     }
 
