@@ -48,6 +48,9 @@ class WebSocketClient {
 
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
 
+    private var messageListener: ((WebSocketMessage) -> Unit)? = null
+    private val messageListeners = mutableListOf<(WebSocketMessage) -> Unit>()
+
 
     fun initialize(deviceId: String) {
         if (webSocket != null) {
@@ -59,10 +62,18 @@ class WebSocketClient {
         this.deviceId = deviceId
     }
 
-    private var messageListener: ((WebSocketMessage) -> Unit)? = null
+    // Update to add listener instead of replacing
+    fun addMessageListener(listener: (WebSocketMessage) -> Unit) {
+        messageListeners.add(listener)
+    }
+
+    // Optional: method to remove specific listener
+    fun removeMessageListener(listener: (WebSocketMessage) -> Unit) {
+        messageListeners.remove(listener)
+    }
 
     fun setMessageListener(listener: (WebSocketMessage) -> Unit) {
-        messageListener = listener
+        messageListeners.add(listener)
     }
 
     fun removeMessageListener() {
@@ -109,7 +120,7 @@ class WebSocketClient {
                     // Try to parse as WebSocketMessage for messageListener
                     try {
                         val wsMessage = gson.fromJson(text, WebSocketMessage::class.java)
-                        messageListener?.let { listener ->
+                        messageListeners.forEach { listener ->
                             handler.post { listener(wsMessage) }
                         }
                     } catch (e: Exception) {

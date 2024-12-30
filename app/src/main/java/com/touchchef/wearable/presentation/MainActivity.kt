@@ -57,14 +57,6 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             deviceId = DevicePreferences(baseContext).deviceId.first() ?: ""
         }
-        webSocketClient.setMessageListener { message ->
-            if (message.to == deviceId && message.type == "addTimer" && message.timer != null) {
-                val duration = message.timer.timerDuration.toIntOrNull()
-                if (duration != null) {
-                    activeTimer = duration
-                }
-            }
-        }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         super.onCreate(savedInstanceState)
 
@@ -82,6 +74,18 @@ class MainActivity : ComponentActivity() {
         // Now we definitely have a deviceId
         webSocketClient.initialize(deviceId)
         initializeServices()
+
+        webSocketClient.addMessageListener { message ->
+            Log.d("testTimerTesting", "Message received: ${message.type}")
+            if (message.type == "addTimer" && message.timer != null) {
+                val duration = message.timer.timerDuration.toIntOrNull()
+                if (duration != null) {
+                    runOnUiThread {
+                        activeTimer = duration
+                    }
+                }
+            }
+        }
 
         requestNotificationPermission()
         requestSensorPermission()
