@@ -50,39 +50,19 @@ fun CircularTimerOverlay(
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
         ) {
-            // Draw background circle
-            drawArc(
-                color = Color.Gray.copy(alpha = 0.2f),
-                startAngle = 0f,
-                sweepAngle = 360f,
-                useCenter = false,
-                style = Stroke(width = 8.dp.toPx())
-            )
 
             // Draw progress arc
             drawArc(
-                color = Color(0xFF90EE90), // Light green
+                color = Color.Gray.copy(alpha = 0.7f),
                 startAngle = -90f,
-                sweepAngle = progress * 360f,
+                sweepAngle = -progress * 360f,
                 useCenter = false,
                 style = Stroke(
-                    width = 8.dp.toPx(),
+                    width = 16.dp.toPx(),
                     cap = StrokeCap.Round
                 )
             )
         }
-
-        // Timer text
-        Text(
-            text = "${remainingSeconds / 60}:${String.format("%02d", remainingSeconds % 60)}",
-            color = Color.Black,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 16.dp)
-        )
     }
 }
