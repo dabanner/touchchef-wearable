@@ -24,6 +24,12 @@ import com.touchchef.wearable.data.DevicePreferences
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import android.Manifest
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import com.google.gson.Gson
 import com.touchchef.wearable.presentation.theme.TouchChefTheme
 
@@ -36,7 +42,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var cookManagementService: CookManagementService
     private lateinit var gameViewModel: GameViewModel
 
-    private val gson = Gson()
+    private var activeTimer by mutableStateOf<Int?>(null)
+
+    private var showFullScreenTimer by mutableStateOf(false)
+
     private lateinit var deviceId: String
     private var devicePreferences: DevicePreferences? = null
 
@@ -68,6 +77,19 @@ class MainActivity : ComponentActivity() {
         // Now we definitely have a deviceId
         webSocketClient.initialize(deviceId)
         initializeServices()
+
+        webSocketClient.addMessageListener { message ->
+            Log.d("testTimerTesting", "Message received: ${message.type}")
+            if (message.type == "addTimer" && message.timer != null) {
+                val duration = message.timer.timerDuration.toIntOrNull()
+                if (duration != null) {
+                    runOnUiThread {
+                        activeTimer = duration
+                        showFullScreenTimer = true
+                    }
+                }
+            }
+        }
 
         requestNotificationPermission()
         requestSensorPermission()
@@ -101,88 +123,118 @@ class MainActivity : ComponentActivity() {
                 // Start detection
                 handRaiseDetector.startDetecting()
 
-                NavHost(navController = navController, startDestination = "qrcodeScreen") {
-                    composable("qrcodeScreen") {
-                        WebSocketQRCode(
-                            webSocketClient = webSocketClient,
-                            context = baseContext,
-                            qrCodeGenerator = qrCodeGenerator,
-                            navigateToConfirmationScreen = { name, avatar, deviceId, avatarColor ->
-                                val avatarColorFix = avatarColor.replace("#", "")
-                                Log.d("MainActivity", "Navigating to confirmation screen with name: $name, avatar: $avatar, deviceId: $deviceId, avatarColor: $avatarColorFix")
-                                runOnUiThread {
-                                    navController.navigate("confirmationScreen/$name/$avatar/$deviceId/$avatarColorFix")
-                                }
-                            }
-                        )
-                    }
-
-                    composable("confirmationScreen/{name}/{avatar}/{deviceId}/{avatarColor}") { backStackEntry ->
-                        val name = backStackEntry.arguments?.getString("name") ?: "Inconnu"
-                        val avatar = backStackEntry.arguments?.getString("avatar") ?: "one.png"
-                        val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
-                        val avatarColor = backStackEntry.arguments?.getString("avatarColor") ?: "ffffff"
-
-                        ConfirmationScreen(
-                            webSocketClient = webSocketClient,
-                            deviceId = deviceId,
-                            name = name,
-                            avatar = avatar,
-                            avatarColor = avatarColor,
-                            navigateToGameScreen = {
-                                Log.d("MainActivity", "Navigating to confirmation screen")
-                                runOnUiThread {
-                                    navController.navigate("gameScreen/${deviceId}/${avatarColor}") {
-                                        popUpTo("qrcodeScreen") { inclusive = true }
-                                        popUpTo("confirmationScreen") { inclusive = true }
+                Box(modifier = Modifier.fillMaxSize()) {
+                    NavHost(navController = navController, startDestination = "qrcodeScreen") {
+                        composable("qrcodeScreen") {
+                            WebSocketQRCode(
+                                webSocketClient = webSocketClient,
+                                context = baseContext,
+                                qrCodeGenerator = qrCodeGenerator,
+                                navigateToConfirmationScreen = { name, avatar, deviceId, avatarColor ->
+                                    val avatarColorFix = avatarColor.replace("#", "")
+                                    Log.d(
+                                        "MainActivity",
+                                        "Navigating to confirmation screen with name: $name, avatar: $avatar, deviceId: $deviceId, avatarColor: $avatarColorFix"
+                                    )
+                                    runOnUiThread {
+                                        navController.navigate("confirmationScreen/$name/$avatar/$deviceId/$avatarColorFix")
                                     }
                                 }
-
-                            }
-                        )
-                    }
-
-                    composable(
-                        route = "gameScreen/{deviceId}/{avatarColor}",
-                        arguments = listOf(navArgument("deviceId") { type = NavType.StringType })
-                    ) { backStackEntry ->
-                        val deviceId = backStackEntry.arguments?.getString("deviceId") ?: ""
-                        val avatarColor = backStackEntry.arguments?.getString("avatarColor") ?: "ffffff"
-                        if (!::gameViewModel.isInitialized) {
-                            gameViewModel = GameViewModel(webSocketClient, deviceId)
+                            )
                         }
-                        GameScreen(
-                            webSocketClient = webSocketClient,
-                            tasks = gameViewModel.tasks,
-                            currentTaskIndex = gameViewModel.currentTaskIndex,
-                            avatarColor = avatarColor,
-                            deviceId=deviceId,
-                            navController = navController,
-                            onTaskChange = { newIndex ->
-                                gameViewModel.onTaskChange(newIndex)
-                            },
-                            onPopTask = {
-                                gameViewModel.popActiveTask()
+
+                        composable("confirmationScreen/{name}/{avatar}/{deviceId}/{avatarColor}") { backStackEntry ->
+                            val name = backStackEntry.arguments?.getString("name") ?: "Inconnu"
+                            val avatar = backStackEntry.arguments?.getString("avatar") ?: "one.png"
+                            val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
+                            val avatarColor =
+                                backStackEntry.arguments?.getString("avatarColor") ?: "ffffff"
+
+                            ConfirmationScreen(
+                                webSocketClient = webSocketClient,
+                                deviceId = deviceId,
+                                name = name,
+                                avatar = avatar,
+                                avatarColor = avatarColor,
+                                navigateToGameScreen = {
+                                    Log.d("MainActivity", "Navigating to confirmation screen")
+                                    runOnUiThread {
+                                        navController.navigate("gameScreen/${deviceId}/${avatarColor}") {
+                                            popUpTo("qrcodeScreen") { inclusive = true }
+                                            popUpTo("confirmationScreen") { inclusive = true }
+                                        }
+                                    }
+
+                                }
+                            )
+                        }
+
+                        composable(
+                            route = "gameScreen/{deviceId}/{avatarColor}",
+                            arguments = listOf(navArgument("deviceId") {
+                                type = NavType.StringType
+                            })
+                        ) { backStackEntry ->
+                            val deviceId = backStackEntry.arguments?.getString("deviceId") ?: ""
+                            val avatarColor =
+                                backStackEntry.arguments?.getString("avatarColor") ?: "ffffff"
+                            if (!::gameViewModel.isInitialized) {
+                                gameViewModel = GameViewModel(webSocketClient, deviceId)
                             }
-                        )
+                            GameScreen(
+                                webSocketClient = webSocketClient,
+                                tasks = gameViewModel.tasks,
+                                currentTaskIndex = gameViewModel.currentTaskIndex,
+                                avatarColor = avatarColor,
+                                deviceId = deviceId,
+                                navController = navController,
+                                onTaskChange = { newIndex ->
+                                    gameViewModel.onTaskChange(newIndex)
+                                },
+                                onPopTask = {
+                                    gameViewModel.popActiveTask()
+                                }
+                            )
+                        }
+
+                        composable("taskScreen/{deviceId}/{taskName}") { backStackEntry ->
+                            val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
+                            val taskName = backStackEntry.arguments?.getString("taskName") ?: "null"
+                            Log.d("Task Device id", "device id : $deviceId")
+                            TaskScreen(
+                                taskHelpService = taskHelpService,
+                                cookManagementService = cookManagementService,
+                                deviceId = deviceId,
+                                taskName = taskName,
+                                onBack = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
                     }
 
-                    composable("taskScreen/{deviceId}/{taskName}") { backStackEntry ->
-                        val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
-                        val taskName = backStackEntry.arguments?.getString("taskName") ?: "null"
-                        Log.d("Task Device id", "device id : $deviceId")
-                        TaskScreen(
-                            taskHelpService = taskHelpService,
-                            cookManagementService = cookManagementService,
-                            deviceId = deviceId,
-                            taskName = taskName,
-                            onBack = {
-                                navController.popBackStack()
-                            }
-                        )
+                    activeTimer?.let { seconds ->
+                        if (showFullScreenTimer) {
+                            // Show full screen timer for initial acceptance
+                            CallStyleTimer(
+                                numOfSeconds = seconds,
+                                onTimerStart = {
+                                    showFullScreenTimer = false
+                                }
+                            )
+                        } else {
+                            // Show circular overlay timer
+                            CircularTimerOverlay(
+                                seconds = seconds,
+                                onTimerComplete = {
+                                    activeTimer = null
+                                }
+                            )
+                        }
                     }
+
+
                 }
-
             }
 
         }
