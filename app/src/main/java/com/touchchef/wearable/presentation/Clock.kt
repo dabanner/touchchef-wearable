@@ -14,24 +14,15 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Text
-import kotlinx.coroutines.delay
+
 
 @Composable
-fun CallStyleTimer(numOfSeconds: Int,
-                   onTimerFinish: () -> Unit = {}
-                   ) {
-    var remainingSeconds by remember { mutableStateOf(numOfSeconds) }
+fun CallStyleTimer(
+    numOfSeconds: Int,
+    onTimerStart: () -> Unit = {}
+) {
+    var remainingSeconds by remember { mutableIntStateOf(numOfSeconds) }
     var isRunning by remember { mutableStateOf(false) }
-
-    LaunchedEffect(isRunning) {
-        while (isRunning && remainingSeconds > 0) {
-            delay(1000)
-            remainingSeconds--
-            if (remainingSeconds == 0) {
-                onTimerFinish()
-            }
-        }
-    }
 
     Box(
         modifier = Modifier
@@ -71,12 +62,15 @@ fun CallStyleTimer(numOfSeconds: Int,
                 textAlign = TextAlign.Center
             )
 
-            // Start button
+            // Start button - now calls onTimerStart when clicked
             Button(
-                onClick = { isRunning = true },
+                onClick = {
+                    isRunning = true
+                    onTimerStart()  // Call this when timer is accepted
+                },
                 enabled = !isRunning,
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = Color(0xFF90EE90),  // Light green
+                    backgroundColor = Color(0xFF90EE90),
                     disabledBackgroundColor = Color(0xFF90EE90).copy(alpha = 0.5f)
                 ),
                 modifier = Modifier
@@ -101,10 +95,10 @@ fun CallStyleTimer(numOfSeconds: Int,
             Button(
                 onClick = {
                     isRunning = false
-                    remainingSeconds = 43
+                    remainingSeconds = numOfSeconds
                 },
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = Color(0xFFFF6961)  // Light red
+                    backgroundColor = Color(0xFFFF6961)
                 ),
                 modifier = Modifier
                     .width(120.dp)

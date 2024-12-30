@@ -43,6 +43,9 @@ class MainActivity : ComponentActivity() {
     private lateinit var gameViewModel: GameViewModel
 
     private var activeTimer by mutableStateOf<Int?>(null)
+
+    private var showFullScreenTimer by mutableStateOf(false)
+
     private lateinit var deviceId: String
     private var devicePreferences: DevicePreferences? = null
 
@@ -82,6 +85,7 @@ class MainActivity : ComponentActivity() {
                 if (duration != null) {
                     runOnUiThread {
                         activeTimer = duration
+                        showFullScreenTimer = true
                     }
                 }
             }
@@ -208,21 +212,28 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+
                     activeTimer?.let { seconds ->
-                        CallStyleTimer(
-                            numOfSeconds = seconds,
-                            onTimerFinish = {
-                                activeTimer = null
-                                // Optionally send a message back to the server when timer completes
-                                webSocketClient.sendJson(mapOf(
-                                    "type" to "timerComplete",
-                                    "to" to "angular",
-                                )) { success ->
-                                    Log.d("Timer", "Timer completion message sent: $success")
+                        if (showFullScreenTimer) {
+                            // Show full screen timer for initial acceptance
+                            CallStyleTimer(
+                                numOfSeconds = seconds,
+                                onTimerStart = {
+                                    showFullScreenTimer = false
                                 }
-                            }
-                        )
+                            )
+                        } else {
+                            // Show circular overlay timer
+                            CircularTimerOverlay(
+                                seconds = seconds,
+                                onTimerComplete = {
+                                    activeTimer = null
+                                }
+                            )
+                        }
                     }
+
+
                 }
             }
 
