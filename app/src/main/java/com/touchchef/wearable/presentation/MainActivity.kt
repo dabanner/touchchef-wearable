@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var cookManagementService: CookManagementService
     private lateinit var gameViewModel: GameViewModel
 
-    private var activeTimer by mutableStateOf<Int?>(null)
+    private var activeTimer by mutableStateOf<Timer?>(null)
 
     private var showFullScreenTimer by mutableStateOf(false)
 
@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
                 val duration = message.timer.timerDuration.toIntOrNull()
                 if (duration != null) {
                     runOnUiThread {
-                        activeTimer = duration
+                        activeTimer = message.timer
                         showFullScreenTimer = true
                     }
                 }
@@ -216,17 +216,31 @@ class MainActivity : ComponentActivity() {
                     activeTimer?.let { seconds ->
                         if (showFullScreenTimer) {
                             // Show full screen timer for initial acceptance
-                            CallStyleTimer(
-                                numOfSeconds = seconds,
-                                onTimerStart = {
-                                    showFullScreenTimer = false
-                                }
-                            )
+                                CallStyleTimer(
+                                    numOfSeconds = seconds.timerDuration.toInt(),
+                                    onTimerStart = {
+                                        webSocketClient.sendJson(mapOf(
+                                            "type" to "timerStart",
+                                            "to" to "angular",
+                                            "timerId" to seconds.timerId
+                                        )) { success ->
+                                            Log.d("Timer", "Timer start message sent: $success")
+                                        }
+                                        showFullScreenTimer = false
+                                    }
+                                )
                         } else {
                             // Show circular overlay timer
                             CircularTimerOverlay(
-                                seconds = seconds,
+                                seconds = seconds.timerDuration.toInt(),
                                 onTimerComplete = {
+                                    webSocketClient.sendJson(mapOf(
+                                        "type" to "timerFinish",
+                                        "to" to "angular",
+                                        "timerId" to seconds.timerId
+                                    )) { success ->
+                                        Log.d("Timer", "Timer finish message sent: $success")
+                                    }
                                     activeTimer = null
                                 }
                             )
