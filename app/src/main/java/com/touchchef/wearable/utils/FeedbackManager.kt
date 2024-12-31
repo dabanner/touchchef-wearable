@@ -12,6 +12,18 @@ class FeedbackManager(private val view: View) {
     private var mediaPlayer: MediaPlayer? = null
     private val vibrator: Vibrator = view.context.getSystemService(Vibrator::class.java)
 
+    fun onTaskFeedback() {
+        val timings = longArrayOf(0, 50, 50, 200)
+        val amplitudes = intArrayOf(
+            0,  // initial delay amplitude
+            VibrationEffect.DEFAULT_AMPLITUDE,  // short vibration
+            0,  // pause
+            VibrationEffect.DEFAULT_AMPLITUDE   // longer vibration
+        )
+        val effect = VibrationEffect.createWaveform(timings, amplitudes, -1)
+        vibrator.vibrate(effect)
+    }
+
     fun playStartFeedback() {
         // timings array: wait time before first vibration, first vibration duration, wait time, second vibration duration...
         // [0, 100, 100, 100, 100, 1000] means:

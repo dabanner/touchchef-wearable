@@ -193,7 +193,7 @@ class MainActivity : ComponentActivity() {
                             val avatarColor =
                                 backStackEntry.arguments?.getString("avatarColor") ?: "ffffff"
                             if (!::gameViewModel.isInitialized) {
-                                gameViewModel = GameViewModel(webSocketClient, deviceId)
+                                gameViewModel = GameViewModel(webSocketClient, feedbackManager, deviceId)
                             }
                             GameScreen(
                                 webSocketClient = webSocketClient,
