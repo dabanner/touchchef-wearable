@@ -238,13 +238,15 @@ private fun TaskStatusOverlay(
     showTaskStatus: MutableState<Boolean>,
     onPopTask: () -> Unit,
     webSocketClient: WebSocketClient,
-    navController: NavHostController
+    navController: NavHostController,
+    feedbackManager: FeedbackManager
 ) {
     Log.d("GameScreen", "Showing Task Status Screen")
     TaskStatusScreen(
         avatarColor = avatarColor,
         onCompleted = {
             Log.d("GameScreen", "Task Completed - Sending finished message")
+            feedbackManager.playButtonPressFeedback()
             val message = mapOf(
                 "type" to "taskFinished",
                 "from" to deviceId,
@@ -258,6 +260,7 @@ private fun TaskStatusOverlay(
         },
         onCancelled = {
             Log.d("GameScreen", "Task Cancelled - Sending unactive message")
+            feedbackManager.playButtonPressFeedback()
             val message = mapOf(
                 "type" to "unactiveTask",
                 "from" to deviceId,
@@ -271,6 +274,7 @@ private fun TaskStatusOverlay(
         },
         onHelp = {
             Log.d("GameScreen", "Help Requested - Navigating to task screen")
+            feedbackManager.playButtonPressFeedback()
             navController.navigate("taskScreen/$deviceId/${currentTask.taskName}") {
                 popUpTo("qrcodeScreen") { inclusive = true }
                 popUpTo("confirmationScreen") { inclusive = true }
@@ -279,6 +283,7 @@ private fun TaskStatusOverlay(
         },
         onBack = {
             Log.d("GameScreen", "Task Status Screen Closed")
+            feedbackManager.playButtonPressFeedback()
             showTaskStatus.value = false
         }
     )
@@ -346,7 +351,8 @@ fun GameScreen(
                 showTaskStatus = showTaskStatus,
                 onPopTask = onPopTask,
                 webSocketClient = webSocketClient,
-                navController = navController
+                navController = navController,
+                feedbackManager = feedbackManager
             )
         }
     }

@@ -20,6 +20,10 @@ class FeedbackManager(private val view: View) {
         view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
     }
 
+    fun playButtonPressFeedback(){
+        view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+    }
+
     fun onTaskFeedback() {
         val timings = longArrayOf(0, 50, 50, 200)
         val amplitudes = intArrayOf(
