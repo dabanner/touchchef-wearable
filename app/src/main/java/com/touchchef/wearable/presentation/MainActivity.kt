@@ -24,6 +24,8 @@ import com.touchchef.wearable.data.DevicePreferences
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import android.Manifest
+import android.view.HapticFeedbackConstants
+import android.view.View
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
@@ -31,7 +33,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.google.gson.Gson
+import com.touchchef.wearable.R
 import com.touchchef.wearable.presentation.theme.TouchChefTheme
+import com.touchchef.wearable.utils.FeedbackManager
 
 class MainActivity : ComponentActivity() {
     private val webSocketClient = WebSocketClient()
@@ -41,6 +45,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var taskHelpService: TaskHelpService
     private lateinit var cookManagementService: CookManagementService
     private lateinit var gameViewModel: GameViewModel
+    private lateinit var feedbackManager: FeedbackManager
 
     private var activeTimer by mutableStateOf<Timer?>(null)
 
@@ -74,16 +79,18 @@ class MainActivity : ComponentActivity() {
             deviceId = qrCodeGenerator.getCachedDeviceId()
         }
 
+        feedbackManager = FeedbackManager(findViewById<View>(android.R.id.content))
+
         // Now we definitely have a deviceId
         webSocketClient.initialize(deviceId)
         initializeServices()
 
         webSocketClient.addMessageListener { message ->
-            Log.d("testTimerTesting", "Message received: ${message.type}")
             if (message.type == "addTimer" && message.timer != null) {
                 val duration = message.timer.timerDuration.toIntOrNull()
                 if (duration != null) {
                     runOnUiThread {
+                        performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                         activeTimer = message.timer
                         showFullScreenTimer = true
                     }
@@ -108,6 +115,11 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    private fun performHapticFeedback(feedbackType: Int) {
+        val view = window.decorView
+        view.performHapticFeedback( feedbackType, )
     }
 
     private fun setupNavigation() {
@@ -151,13 +163,15 @@ class MainActivity : ComponentActivity() {
                                 backStackEntry.arguments?.getString("avatarColor") ?: "ffffff"
 
                             ConfirmationScreen(
-                                webSocketClient = webSocketClient,
+                                webSocketClient,
+                                feedbackManager,
                                 deviceId = deviceId,
                                 name = name,
                                 avatar = avatar,
                                 avatarColor = avatarColor,
                                 navigateToGameScreen = {
                                     Log.d("MainActivity", "Navigating to confirmation screen")
+                                    feedbackManager.playStartFeedback()
                                     runOnUiThread {
                                         navController.navigate("gameScreen/${deviceId}/${avatarColor}") {
                                             popUpTo("qrcodeScreen") { inclusive = true }
@@ -179,7 +193,7 @@ class MainActivity : ComponentActivity() {
                             val avatarColor =
                                 backStackEntry.arguments?.getString("avatarColor") ?: "ffffff"
                             if (!::gameViewModel.isInitialized) {
-                                gameViewModel = GameViewModel(webSocketClient, deviceId)
+                                gameViewModel = GameViewModel(webSocketClient, feedbackManager, deviceId)
                             }
                             GameScreen(
                                 webSocketClient = webSocketClient,
@@ -193,7 +207,8 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onPopTask = {
                                     gameViewModel.popActiveTask()
-                                }
+                                },
+                                feedbackManager = feedbackManager
                             )
                         }
 

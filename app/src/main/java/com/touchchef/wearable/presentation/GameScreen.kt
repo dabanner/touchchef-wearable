@@ -35,6 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.navigation.NavHostController
 import com.touchchef.wearable.presentation.theme.TouchChefTypography
+import com.touchchef.wearable.utils.FeedbackManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -98,6 +99,9 @@ private fun TaskProgressIndicator(
                     )
                     .padding(vertical = 6.dp)
             )
+            if (index < totalTasks - 1) {  // Don't add spacer after the last dot
+                Spacer(modifier = Modifier.height(3.dp))
+            }
         }
     }
 }
@@ -106,8 +110,6 @@ private fun TaskProgressIndicator(
 @Composable
 private fun TaskContent(
     task: Task,
-    currentTaskIndex: Int,
-    totalTasks: Int,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -142,14 +144,6 @@ private fun TaskContent(
             modifier = Modifier.padding(horizontal = 16.dp),
             fontFamily = TouchChefTypography.bricolageGrotesque
         )
-
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "${currentTaskIndex + 1}/$totalTasks",
-            color = Color.White.copy(alpha = 0.7f),
-            style = TextStyle(fontSize = 14.sp),
-            fontFamily = TouchChefTypography.bricolageGrotesque
-        )
     }
 }
 @Composable
@@ -159,6 +153,7 @@ private fun HandleGesturesBox(
     tasks: List<Task>,
     onTaskChange: (Int) -> Unit,
     showTaskStatus: MutableState<Boolean>,
+    feedbackManager: FeedbackManager,
     content: @Composable BoxScope.() -> Unit
 ) {
     var dragOffset by remember { mutableStateOf(0f) }
@@ -179,6 +174,7 @@ private fun HandleGesturesBox(
                                     delay(500)
                                     if (dragOffset == 0f) {
                                         Log.d("GameScreen", "Long Press Detected at index $currentTaskIndex - Showing Task Status")
+                                       feedbackManager.playLongPressFeedback()
                                         showTaskStatus.value = true
                                     }
                                 }
@@ -242,13 +238,15 @@ private fun TaskStatusOverlay(
     showTaskStatus: MutableState<Boolean>,
     onPopTask: () -> Unit,
     webSocketClient: WebSocketClient,
-    navController: NavHostController
+    navController: NavHostController,
+    feedbackManager: FeedbackManager
 ) {
     Log.d("GameScreen", "Showing Task Status Screen")
     TaskStatusScreen(
         avatarColor = avatarColor,
         onCompleted = {
             Log.d("GameScreen", "Task Completed - Sending finished message")
+            feedbackManager.playButtonPressFeedback()
             val message = mapOf(
                 "type" to "taskFinished",
                 "from" to deviceId,
@@ -262,6 +260,7 @@ private fun TaskStatusOverlay(
         },
         onCancelled = {
             Log.d("GameScreen", "Task Cancelled - Sending unactive message")
+            feedbackManager.playButtonPressFeedback()
             val message = mapOf(
                 "type" to "unactiveTask",
                 "from" to deviceId,
@@ -275,6 +274,7 @@ private fun TaskStatusOverlay(
         },
         onHelp = {
             Log.d("GameScreen", "Help Requested - Navigating to task screen")
+            feedbackManager.playButtonPressFeedback()
             navController.navigate("taskScreen/$deviceId/${currentTask.taskName}") {
                 popUpTo("qrcodeScreen") { inclusive = true }
                 popUpTo("confirmationScreen") { inclusive = true }
@@ -283,6 +283,7 @@ private fun TaskStatusOverlay(
         },
         onBack = {
             Log.d("GameScreen", "Task Status Screen Closed")
+            feedbackManager.playButtonPressFeedback()
             showTaskStatus.value = false
         }
     )
@@ -297,7 +298,8 @@ fun GameScreen(
     onPopTask: () -> Unit,
     deviceId: String,
     avatarColor: String,
-    navController: NavHostController
+    navController: NavHostController,
+    feedbackManager: FeedbackManager
 ) {
     var showTaskStatus = remember { mutableStateOf(false) }
 
@@ -321,7 +323,8 @@ fun GameScreen(
                 tasks = tasks,
                 currentTask = currentTask,
                 onTaskChange = onTaskChange,
-                showTaskStatus = showTaskStatus
+                showTaskStatus = showTaskStatus,
+                feedbackManager = feedbackManager
             ) {
                 TaskProgressIndicator(
                     totalTasks = tasks.size,
@@ -333,8 +336,6 @@ fun GameScreen(
 
                 TaskContent(
                     task = currentTask,
-                    currentTaskIndex = currentTaskIndex,
-                    totalTasks = tasks.size,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(start = 24.dp, end = 16.dp, top = 16.dp, bottom = 16.dp)
@@ -350,7 +351,8 @@ fun GameScreen(
                 showTaskStatus = showTaskStatus,
                 onPopTask = onPopTask,
                 webSocketClient = webSocketClient,
-                navController = navController
+                navController = navController,
+                feedbackManager = feedbackManager
             )
         }
     }

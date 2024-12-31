@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import com.touchchef.wearable.utils.FeedbackManager
 
 data class AssignedTask(
     val taskName: String,
@@ -32,6 +33,7 @@ data class Task(
 
 class GameViewModel(
     private val webSocketClient: WebSocketClient,
+    private val feedbackManager: FeedbackManager,
     private val deviceId: String
 ) : ViewModel() {
     private val _tasks = mutableStateListOf<Task>()
@@ -86,6 +88,8 @@ class GameViewModel(
             val currentTask = _tasks[newIndex]
             Log.d("GameViewModel", "Switching to task: ${currentTask.taskName}")
 
+            feedbackManager.playTaskChangeFeedback()
+
             val message = mapOf(
                 "type" to "activeTask",
                 "from" to deviceId,
@@ -125,6 +129,7 @@ class GameViewModel(
 
                         val taskExists = _tasks.any { it.taskId == newTask.taskId }
                         if (!taskExists) {
+                            feedbackManager.onTaskFeedback()
                             _tasks.add(newTask)
                             Log.d("GameViewModel", "Added new task. Total tasks: ${_tasks.size}")
 
