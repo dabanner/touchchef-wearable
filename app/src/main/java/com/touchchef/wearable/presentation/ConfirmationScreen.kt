@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.first
 @Composable
 fun ConfirmationScreen(
     webSocketClient: WebSocketClient,
+    feedbackManager: FeedbackManager,
     deviceId: String,
     name: String,
     avatar: String,
@@ -62,7 +63,6 @@ fun ConfirmationScreen(
     var isMessageSent = false
     val context = LocalContext.current
     val view = LocalView.current
-    val feedbackManager = remember { FeedbackManager(view) }
     var hasPlayedFeedback by remember { mutableStateOf(false) }
     val devicePreferences = DevicePreferences(context)
 

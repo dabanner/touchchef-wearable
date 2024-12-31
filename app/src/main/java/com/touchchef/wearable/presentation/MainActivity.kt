@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import android.Manifest
 import android.view.HapticFeedbackConstants
+import android.view.View
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
@@ -32,7 +33,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.google.gson.Gson
+import com.touchchef.wearable.R
 import com.touchchef.wearable.presentation.theme.TouchChefTheme
+import com.touchchef.wearable.utils.FeedbackManager
 
 class MainActivity : ComponentActivity() {
     private val webSocketClient = WebSocketClient()
@@ -42,6 +45,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var taskHelpService: TaskHelpService
     private lateinit var cookManagementService: CookManagementService
     private lateinit var gameViewModel: GameViewModel
+    private lateinit var feedbackManager: FeedbackManager
 
     private var activeTimer by mutableStateOf<Timer?>(null)
 
@@ -74,6 +78,8 @@ class MainActivity : ComponentActivity() {
             Thread.sleep(100)  // Wait a bit
             deviceId = qrCodeGenerator.getCachedDeviceId()
         }
+
+        feedbackManager = FeedbackManager(findViewById<View>(android.R.id.content))
 
         // Now we definitely have a deviceId
         webSocketClient.initialize(deviceId)
@@ -157,13 +163,15 @@ class MainActivity : ComponentActivity() {
                                 backStackEntry.arguments?.getString("avatarColor") ?: "ffffff"
 
                             ConfirmationScreen(
-                                webSocketClient = webSocketClient,
+                                webSocketClient,
+                                feedbackManager,
                                 deviceId = deviceId,
                                 name = name,
                                 avatar = avatar,
                                 avatarColor = avatarColor,
                                 navigateToGameScreen = {
                                     Log.d("MainActivity", "Navigating to confirmation screen")
+                                    feedbackManager.playStartFeedback()
                                     runOnUiThread {
                                         navController.navigate("gameScreen/${deviceId}/${avatarColor}") {
                                             popUpTo("qrcodeScreen") { inclusive = true }
