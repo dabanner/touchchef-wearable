@@ -24,6 +24,7 @@ import com.touchchef.wearable.data.DevicePreferences
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import android.Manifest
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
@@ -79,11 +80,11 @@ class MainActivity : ComponentActivity() {
         initializeServices()
 
         webSocketClient.addMessageListener { message ->
-            Log.d("testTimerTesting", "Message received: ${message.type}")
             if (message.type == "addTimer" && message.timer != null) {
                 val duration = message.timer.timerDuration.toIntOrNull()
                 if (duration != null) {
                     runOnUiThread {
+                        performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                         activeTimer = message.timer
                         showFullScreenTimer = true
                     }
@@ -108,6 +109,11 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    private fun performHapticFeedback(feedbackType: Int) {
+        val view = window.decorView
+        view.performHapticFeedback( feedbackType, )
     }
 
     private fun setupNavigation() {

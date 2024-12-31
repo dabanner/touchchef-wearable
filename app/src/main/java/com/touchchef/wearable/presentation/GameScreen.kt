@@ -98,6 +98,9 @@ private fun TaskProgressIndicator(
                     )
                     .padding(vertical = 6.dp)
             )
+            if (index < totalTasks - 1) {  // Don't add spacer after the last dot
+                Spacer(modifier = Modifier.height(3.dp))
+            }
         }
     }
 }
@@ -106,8 +109,6 @@ private fun TaskProgressIndicator(
 @Composable
 private fun TaskContent(
     task: Task,
-    currentTaskIndex: Int,
-    totalTasks: Int,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -140,14 +141,6 @@ private fun TaskContent(
             style = TextStyle(fontSize = 20.sp),
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 16.dp),
-            fontFamily = TouchChefTypography.bricolageGrotesque
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "${currentTaskIndex + 1}/$totalTasks",
-            color = Color.White.copy(alpha = 0.7f),
-            style = TextStyle(fontSize = 14.sp),
             fontFamily = TouchChefTypography.bricolageGrotesque
         )
     }
@@ -333,8 +326,6 @@ fun GameScreen(
 
                 TaskContent(
                     task = currentTask,
-                    currentTaskIndex = currentTaskIndex,
-                    totalTasks = tasks.size,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(start = 24.dp, end = 16.dp, top = 16.dp, bottom = 16.dp)
