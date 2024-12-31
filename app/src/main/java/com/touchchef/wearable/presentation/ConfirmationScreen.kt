@@ -1,6 +1,7 @@
 package com.touchchef.wearable.presentation
 
 import android.util.Log
+import android.view.View
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -18,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -58,11 +60,10 @@ fun ConfirmationScreen(
         else -> R.drawable.one
     }
     var isMessageSent = false
-    val gson = Gson()
     val context = LocalContext.current
-    val feedbackManager = remember { FeedbackManager(context) }
+    val view = LocalView.current
+    val feedbackManager = remember { FeedbackManager(view) }
     var hasPlayedFeedback by remember { mutableStateOf(false) }
-    var cachedDeviceId = "null"
     val devicePreferences = DevicePreferences(context)
 
     val message = mapOf("type" to "confirmation", "to" to "angular", "from" to deviceId)
@@ -74,7 +75,6 @@ fun ConfirmationScreen(
 
     // Effet pour gérer le feedback
     LaunchedEffect(isMessageSent) {
-        devicePreferences.deviceId.first()?.let {cachedDeviceId = it}
         if (isMessageSent && !hasPlayedFeedback) {
             feedbackManager.playSuccessFeedback()
             hasPlayedFeedback = true
