@@ -207,7 +207,8 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onPopTask = {
                                     gameViewModel.popActiveTask()
-                                }
+                                },
+                                feedbackManager = feedbackManager
                             )
                         }
 

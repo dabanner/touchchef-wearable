@@ -12,6 +12,14 @@ class FeedbackManager(private val view: View) {
     private var mediaPlayer: MediaPlayer? = null
     private val vibrator: Vibrator = view.context.getSystemService(Vibrator::class.java)
 
+    fun playTaskChangeFeedback() {
+        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+    }
+
+    fun playLongPressFeedback(){
+        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+    }
+
     fun onTaskFeedback() {
         val timings = longArrayOf(0, 50, 50, 200)
         val amplitudes = intArrayOf(

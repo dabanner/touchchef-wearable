@@ -88,6 +88,8 @@ class GameViewModel(
             val currentTask = _tasks[newIndex]
             Log.d("GameViewModel", "Switching to task: ${currentTask.taskName}")
 
+            feedbackManager.playTaskChangeFeedback()
+
             val message = mapOf(
                 "type" to "activeTask",
                 "from" to deviceId,

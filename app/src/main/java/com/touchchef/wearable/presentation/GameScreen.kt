@@ -35,6 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.navigation.NavHostController
 import com.touchchef.wearable.presentation.theme.TouchChefTypography
+import com.touchchef.wearable.utils.FeedbackManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -152,6 +153,7 @@ private fun HandleGesturesBox(
     tasks: List<Task>,
     onTaskChange: (Int) -> Unit,
     showTaskStatus: MutableState<Boolean>,
+    feedbackManager: FeedbackManager,
     content: @Composable BoxScope.() -> Unit
 ) {
     var dragOffset by remember { mutableStateOf(0f) }
@@ -172,6 +174,7 @@ private fun HandleGesturesBox(
                                     delay(500)
                                     if (dragOffset == 0f) {
                                         Log.d("GameScreen", "Long Press Detected at index $currentTaskIndex - Showing Task Status")
+                                       feedbackManager.playLongPressFeedback()
                                         showTaskStatus.value = true
                                     }
                                 }
@@ -290,7 +293,8 @@ fun GameScreen(
     onPopTask: () -> Unit,
     deviceId: String,
     avatarColor: String,
-    navController: NavHostController
+    navController: NavHostController,
+    feedbackManager: FeedbackManager
 ) {
     var showTaskStatus = remember { mutableStateOf(false) }
 
@@ -314,7 +318,8 @@ fun GameScreen(
                 tasks = tasks,
                 currentTask = currentTask,
                 onTaskChange = onTaskChange,
-                showTaskStatus = showTaskStatus
+                showTaskStatus = showTaskStatus,
+                feedbackManager = feedbackManager
             ) {
                 TaskProgressIndicator(
                     totalTasks = tasks.size,
