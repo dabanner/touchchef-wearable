@@ -111,7 +111,7 @@ class WebSocketClient {
                     Log.d("WebSocketClient", "Received raw message on device $deviceId: $text")
 
                     // Handle task-related messages
-                    if ((to == deviceId || to == "all" || to == "allWatches") &&
+                    if ((to == deviceId || to == "all") &&
                         type in listOf("help_request", "task_notification", "task_acceptance")) {
                         Log.d("WebSocketClient", "Processing task message for device $deviceId")
                         handler.post { onTaskMessage(mapMessage) }
