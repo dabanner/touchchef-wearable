@@ -32,10 +32,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.google.gson.Gson
-import com.touchchef.wearable.R
+import androidx.navigation.NavHostController
 import com.touchchef.wearable.presentation.theme.TouchChefTheme
 import com.touchchef.wearable.utils.FeedbackManager
+import kotlin.math.log
 
 class MainActivity : ComponentActivity() {
     private val webSocketClient = WebSocketClient()
@@ -46,6 +46,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var cookManagementService: CookManagementService
     private lateinit var gameViewModel: GameViewModel
     private lateinit var feedbackManager: FeedbackManager
+    private lateinit var navController: NavHostController
 
     private var activeTimer by mutableStateOf<Timer?>(null)
 
@@ -96,6 +97,26 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+
+            if (message.type == "endGame" && ::navController.isInitialized) {
+                runOnUiThread {
+                    performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    val currentBackStack = navController.currentBackStackEntry
+
+                    // Log the entire backstack arguments
+                    Log.d("Navigation", "Current backstack arguments: ${currentBackStack?.arguments}")
+
+                    val color = currentBackStack?.arguments?.getString("avatarColor") ?: "FFFC403"
+                    val name = currentBackStack?.arguments?.getString("name") ?: "Bravo!"
+                    val avatar = currentBackStack?.arguments?.getString("avatar") ?: "1"
+
+                    // Log individual values
+                    Log.d("Navigation", "Retrieved values - color: $color, name: $name, avatar: $avatar")
+                    Log.d("Navigation", "Navigating to: raiseHandScreen/$name/$avatar/$color")
+
+                    navController.navigate("raiseHandScreen/$name/$avatar/$color")
+                }
+            }
         }
 
         requestNotificationPermission()
@@ -128,7 +149,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             TouchChefTheme {
 
-                val navController = rememberNavController()
+                navController = rememberNavController()
                 // Initialize the detector
                 handRaiseDetector = HandRaiseDetector(this, webSocketClient)
 
@@ -155,7 +176,15 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        composable("confirmationScreen/{name}/{avatar}/{deviceId}/{avatarColor}") { backStackEntry ->
+                        composable(
+                            route = "confirmationScreen/{name}/{avatar}/{deviceId}/{avatarColor}",
+                            arguments = listOf(
+                                navArgument("name") { type = NavType.StringType },
+                                navArgument("avatar") { type = NavType.StringType },
+                                navArgument("deviceId") { type = NavType.StringType },
+                                navArgument("avatarColor") { type = NavType.StringType }
+                            )
+                        ) { backStackEntry ->
                             val name = backStackEntry.arguments?.getString("name") ?: "Inconnu"
                             val avatar = backStackEntry.arguments?.getString("avatar") ?: "one.png"
                             val deviceId = backStackEntry.arguments?.getString("deviceId") ?: "null"
@@ -173,6 +202,8 @@ class MainActivity : ComponentActivity() {
                                     Log.d("MainActivity", "Navigating to confirmation screen")
                                     feedbackManager.playStartFeedback()
                                     runOnUiThread {
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("name", name)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("avatar", avatar)
                                         navController.navigate("gameScreen/${deviceId}/${avatarColor}") {
                                             popUpTo("qrcodeScreen") { inclusive = true }
                                             popUpTo("confirmationScreen") { inclusive = true }
@@ -185,7 +216,8 @@ class MainActivity : ComponentActivity() {
 
                         composable(
                             route = "gameScreen/{deviceId}/{avatarColor}",
-                            arguments = listOf(navArgument("deviceId") {
+                            arguments = listOf(
+                                navArgument("deviceId") {
                                 type = NavType.StringType
                             })
                         ) { backStackEntry ->
@@ -222,6 +254,28 @@ class MainActivity : ComponentActivity() {
                                 deviceId = deviceId,
                                 taskName = taskName,
                                 onBack = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+
+                        composable(
+                            route = "raiseHandScreen/{name}/{avatar}/{color}",
+                            arguments = listOf(
+                                navArgument("name") { type = NavType.StringType },
+                                navArgument("avatar") { type = NavType.StringType },
+                                navArgument("color") { type = NavType.StringType }
+                            )
+                        ) { backStackEntry ->
+                            val name = backStackEntry.arguments?.getString("name") ?: "Bravo !"
+                            val avatar = backStackEntry.arguments?.getString("avatar") ?: "1"
+                            val color = backStackEntry.arguments?.getString("color") ?: "ffffff"
+
+                            RaiseHandScreen(
+                                name = name,
+                                avatar = avatar,
+                                backgroundColor = color,
+                                onDismiss = {
                                     navController.popBackStack()
                                 }
                             )
