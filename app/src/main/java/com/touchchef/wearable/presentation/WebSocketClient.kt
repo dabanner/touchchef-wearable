@@ -149,6 +149,7 @@ class WebSocketClient {
                 isConnected = false
             }
         })
+        isConnected = true
     }
 
     fun sendMessage(message: String, onResult: (Boolean) -> Unit) {
