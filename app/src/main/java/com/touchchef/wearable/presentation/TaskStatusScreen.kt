@@ -107,7 +107,7 @@ fun TaskStatusScreen(
                         }
 
                         // Help Button
-                        Button(
+                        /*Button(
                             onClick = onHelp,
                             modifier = Modifier
                                 .width(120.dp)
@@ -132,7 +132,7 @@ fun TaskStatusScreen(
                                     fontSize = 12.sp
                                 )
                             }
-                        }
+                        }*/
 
                         // Back Button
                         Button(
