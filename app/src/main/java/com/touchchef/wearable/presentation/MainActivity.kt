@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
         initializeServices()
 
         webSocketClient.addMessageListener { message ->
-            if (message.type == "addTimer" && message.timer != null) {
+            if (message.to == deviceId && message.type == "addTimer" && message.timer != null) {
                 val duration = message.timer.timerDuration.toIntOrNull()
                 if (duration != null) {
                     runOnUiThread {
