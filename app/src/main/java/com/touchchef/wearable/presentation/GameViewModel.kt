@@ -207,10 +207,8 @@ class GameViewModel(
                         }
                     }
                 }
-            }
-            when {
-                message.type == "unactiveTask" && hasTask(message.taskId) -> {
-                    message.taskId?.let { popTaskWithId(it) }
+                message.type == "unactiveTask" && hasTask(message.taskID) -> {
+                    message.taskID?.let { popTaskWithId(it) }
                 }
             }
         }

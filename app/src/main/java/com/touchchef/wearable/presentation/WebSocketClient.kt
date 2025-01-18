@@ -19,7 +19,7 @@ data class WebSocketMessage(
     val avatar: String?,
     val avatarColor: String?,
     val cooksList: List<Map<String, Any>>?,
-    val taskId: String?
+    val taskID: String?
 )
 
 data class Timer(
