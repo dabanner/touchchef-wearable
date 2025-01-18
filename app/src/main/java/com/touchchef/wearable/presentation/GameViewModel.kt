@@ -78,6 +78,57 @@ class GameViewModel(
         }
     }
 
+    fun popTaskWithId(taskId: String) {
+        Log.d("GameViewModel", "Attempting to pop task with ID: $taskId. Total tasks: ${_tasks.size}")
+
+        // Find the index of the task with the given ID
+        val taskIndex = _tasks.indexOfFirst { it.taskId == taskId }
+
+        if (taskIndex != -1) {
+            // Remove the task
+            val removedTask = _tasks[taskIndex]
+            _tasks.removeAt(taskIndex)
+            Log.d("GameViewModel", "Removed task: ${removedTask.taskName}")
+
+            // Adjust the current index if the removed task was before or at the current index
+            if (taskIndex <= currentTaskIndex && currentTaskIndex > 0) {
+                val newIndex = currentTaskIndex - 1
+                Log.d("GameViewModel", "Adjusting currentTaskIndex from $currentTaskIndex to $newIndex")
+                _currentTaskIndex.value = newIndex
+            }
+
+            // If there are remaining tasks, send activeTask message for the current task
+            if (_tasks.isNotEmpty()) {
+                val currentTask = _tasks[currentTaskIndex]
+                val message = mapOf(
+                    "type" to "activeTask",
+                    "from" to deviceId,
+                    "to" to "table",
+                    "assignedTask" to currentTask
+                )
+                webSocketClient.sendJson(message) { success ->
+                    Log.d("GameViewModel", "Active task update after pop: ${if (success) "success" else "failed"} for task: ${currentTask.taskName}")
+                }
+            } else {
+                Log.d("GameViewModel", "No tasks remaining after pop")
+            }
+        } else {
+            Log.e("GameViewModel", "Cannot pop task: task with ID $taskId not found")
+        }
+    }
+
+    private fun hasTask(taskId: String?): Boolean {
+        // Return false immediately if taskId is null
+        if (taskId == null) {
+            Log.d("GameViewModel", "Checking if null taskId exists: false")
+            return false
+        }
+
+        val exists = _tasks.any { it.taskId == taskId }
+        Log.d("GameViewModel", "Checking if task $taskId exists: $exists")
+        return exists
+    }
+
     fun onTaskChange(newIndex: Int) {
         Log.d("GameViewModel", "Task change requested: current index=${_currentTaskIndex.value}, new index=$newIndex, total tasks=${_tasks.size}")
 
@@ -155,6 +206,11 @@ class GameViewModel(
                             Log.d("GameViewModel", "Skipped duplicate task: ${newTask.taskId}")
                         }
                     }
+                }
+            }
+            when {
+                message.type == "unactiveTask" && hasTask(message.taskId) -> {
+                    message.taskId?.let { popTaskWithId(it) }
                 }
             }
         }
