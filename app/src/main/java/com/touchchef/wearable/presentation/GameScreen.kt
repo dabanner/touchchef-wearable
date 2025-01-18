@@ -250,7 +250,8 @@ private fun TaskStatusOverlay(
             val message = mapOf(
                 "type" to "taskFinished",
                 "from" to deviceId,
-                "to" to "unity"
+                "to" to "all",
+                "assignedTask" to currentTask
             )
             webSocketClient.sendJson(message) { success ->
                 Log.d("GameScreen", "Task finished message sent: $success")
@@ -264,7 +265,8 @@ private fun TaskStatusOverlay(
             val message = mapOf(
                 "type" to "unactiveTask",
                 "from" to deviceId,
-                "to" to "unity"
+                "to" to "all",
+                "assignedTask" to currentTask
             )
             webSocketClient.sendJson(message) { success ->
                 Log.d("GameScreen", "Task unactive message sent: $success")
