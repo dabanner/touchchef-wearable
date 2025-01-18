@@ -296,6 +296,17 @@ class MainActivity : ComponentActivity() {
                                             Log.d("Timer", "Timer start message sent: $success")
                                         }
                                         showFullScreenTimer = false
+                                    },
+                                    onTimerEnd = {
+                                        webSocketClient.sendJson(mapOf(
+                                            "type" to "timerRefuse",
+                                            "to" to "angular",
+                                            "timerId" to seconds.timerId
+                                        )) { success ->
+                                            Log.d("Timer", "Timer start message sent: $success")
+                                        }
+                                        showFullScreenTimer = false
+                                        activeTimer = null
                                     }
                                 )
                         } else {

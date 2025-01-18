@@ -19,7 +19,8 @@ import androidx.wear.compose.material.Text
 @Composable
 fun CallStyleTimer(
     numOfSeconds: Int,
-    onTimerStart: () -> Unit = {}
+    onTimerStart: () -> Unit = {},
+    onTimerEnd: () -> Unit = {}
 ) {
     var remainingSeconds by remember { mutableIntStateOf(numOfSeconds) }
     var isRunning by remember { mutableStateOf(false) }
@@ -95,7 +96,8 @@ fun CallStyleTimer(
             Button(
                 onClick = {
                     isRunning = false
-                    remainingSeconds = numOfSeconds
+                    remainingSeconds = 0
+                    onTimerEnd()
                 },
                 colors = ButtonDefaults.buttonColors(
                     backgroundColor = Color(0xFFFF6961)
