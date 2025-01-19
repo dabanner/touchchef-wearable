@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 import android.Manifest
 import android.view.HapticFeedbackConstants
 import android.view.View
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
@@ -115,6 +116,17 @@ class MainActivity : ComponentActivity() {
                     Log.d("Navigation", "Navigating to: raiseHandScreen/$name/$avatar/$color")
 
                     navController.navigate("raiseHandScreen/$name/$avatar/$color")
+                }
+            }
+
+            if(message.type=="stop_game" && ::navController.isInitialized){
+                runOnUiThread{
+                    performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    val currentBackStack = navController.currentBackStackEntry
+                    val color = currentBackStack?.arguments?.getString("avatarColor") ?: "FFFC403"
+
+                    navController.navigate("endGameScreen/$color")
+
                 }
             }
         }
@@ -269,11 +281,23 @@ class MainActivity : ComponentActivity() {
                         ) { backStackEntry ->
                             val name = backStackEntry.arguments?.getString("name") ?: "Bravo !"
                             val avatar = backStackEntry.arguments?.getString("avatar") ?: "1"
-                            val color = backStackEntry.arguments?.getString("color") ?: "ffffff"
+                            val color = backStackEntry.arguments?.getString("color") ?: "FFFC403"
 
                             RaiseHandScreen(
                                 name = name,
                                 avatar = avatar,
+                                backgroundColor = color,
+                                onDismiss = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+
+                        composable(
+                            route = "endGameScreen/{color}",
+                        ){ backStackEntry ->
+                            val color = backStackEntry.arguments?.getString("color") ?: "FFFC403"
+                            EndGameScreen(
                                 backgroundColor = color,
                                 onDismiss = {
                                     navController.popBackStack()
