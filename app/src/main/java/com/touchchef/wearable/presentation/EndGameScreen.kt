@@ -15,11 +15,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.Text
+import com.touchchef.wearable.utils.FeedbackManager
 
 @Composable
 fun EndGameScreen (
     backgroundColor: String,
-    onDismiss: () -> Unit
 ){
     Box(
         modifier = Modifier
