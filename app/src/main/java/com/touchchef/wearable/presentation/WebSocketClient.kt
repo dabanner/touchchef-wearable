@@ -19,8 +19,17 @@ data class WebSocketMessage(
     val avatar: String?,
     val avatarColor: String?,
     val cooksList: List<Map<String, Any>>?,
-    val taskID: String?
+    val taskID: String?,
+    val progressData: ProgressData? = null
 )
+
+data class ProgressData(
+    val playerId: String,
+    val taskId: String,
+    val currentProgress: Int,
+    val targetProgress: Int
+)
+
 
 data class Timer(
     val timerId: String,

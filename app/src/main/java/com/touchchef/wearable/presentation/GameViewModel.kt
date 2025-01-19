@@ -215,10 +215,14 @@ class GameViewModel(
                     }
                 }
 
-                message.type == "taskFinished" && hasTask(message.assignedTask?.taskId) -> {
-                    message.assignedTask?.let {
-                        popTaskWithId(it.taskId)
-                        feedbackManager.onTaskSuccessFeedback()
+                message.type == "taskProgress" && message.progressData?.taskId?.let { taskId -> hasTask(taskId) } == true -> {
+                    val progressData = message.progressData
+                    if (progressData != null &&
+                        progressData.currentProgress == progressData.targetProgress) {
+                        progressData.taskId?.let { taskId ->
+                            popTaskWithId(taskId)
+                            feedbackManager.onTaskSuccessFeedback()
+                        }
                     }
                 }
             }
