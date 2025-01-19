@@ -36,6 +36,16 @@ class FeedbackManager(private val view: View) {
         vibrator.vibrate(effect)
     }
 
+    fun onTaskSuccessFeedback() {
+        val timings = longArrayOf(0, 200)
+        val amplitudes = intArrayOf(
+            0,  // initial delay amplitude
+            VibrationEffect.DEFAULT_AMPLITUDE,  // short vibration
+        )
+        val effect = VibrationEffect.createWaveform(timings, amplitudes, -1)
+        vibrator.vibrate(effect)
+    }
+
     fun onTaskRemoveFeedback() {
         val timings = longArrayOf(0, 50, 50, 50, 50, 50)
         val amplitudes = intArrayOf(

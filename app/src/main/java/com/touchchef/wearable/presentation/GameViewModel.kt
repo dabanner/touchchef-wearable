@@ -207,10 +207,18 @@ class GameViewModel(
                         }
                     }
                 }
+
                 message.type == "unactiveTask" && hasTask(message.taskID) -> {
                     message.taskID?.let {
                         popTaskWithId(it)
                         feedbackManager.onTaskRemoveFeedback()
+                    }
+                }
+
+                message.type == "taskFinished" && hasTask(message.assignedTask?.taskId) -> {
+                    message.assignedTask?.let {
+                        popTaskWithId(it.taskId)
+                        feedbackManager.onTaskSuccessFeedback()
                     }
                 }
             }
