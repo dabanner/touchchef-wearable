@@ -34,7 +34,7 @@ data class Task(
 class GameViewModel(
     private val webSocketClient: WebSocketClient,
     private val feedbackManager: FeedbackManager,
-    private val deviceId: String
+    private val deviceId: String,
 ) : ViewModel() {
     private val _tasks = mutableStateListOf<Task>()
     val tasks: List<Task> = _tasks
@@ -78,7 +78,7 @@ class GameViewModel(
         }
     }
 
-    fun popTaskWithId(taskId: String) {
+    private fun popTaskWithId(taskId: String) {
         Log.d("GameViewModel", "Attempting to pop task with ID: $taskId. Total tasks: ${_tasks.size}")
 
         // Find the index of the task with the given ID
@@ -208,7 +208,10 @@ class GameViewModel(
                     }
                 }
                 message.type == "unactiveTask" && hasTask(message.taskID) -> {
-                    message.taskID?.let { popTaskWithId(it) }
+                    message.taskID?.let {
+                        popTaskWithId(it)
+                        feedbackManager.onTaskRemoveFeedback()
+                    }
                 }
             }
         }
