@@ -121,9 +121,9 @@ class MainActivity : ComponentActivity() {
 
             if(message.type=="stop_game" && ::navController.isInitialized){
                 runOnUiThread{
-                    performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                     val currentBackStack = navController.currentBackStackEntry
                     val color = currentBackStack?.arguments?.getString("avatarColor") ?: "FFFC403"
+                    feedbackManager.onEndGameFeedback()
 
                     navController.navigate("endGameScreen/$color")
 
@@ -299,9 +299,6 @@ class MainActivity : ComponentActivity() {
                             val color = backStackEntry.arguments?.getString("color") ?: "FFFC403"
                             EndGameScreen(
                                 backgroundColor = color,
-                                onDismiss = {
-                                    navController.popBackStack()
-                                }
                             )
                         }
                     }

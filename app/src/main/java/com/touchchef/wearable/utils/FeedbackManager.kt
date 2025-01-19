@@ -36,6 +36,20 @@ class FeedbackManager(private val view: View) {
         vibrator.vibrate(effect)
     }
 
+    fun onEndGameFeedback() {
+        val timings = longArrayOf(0, 100, 400, 100, 400, 600)
+        val amplitudes = intArrayOf(
+            0,  // initial delay amplitude
+            VibrationEffect.DEFAULT_AMPLITUDE,  // first short whistle
+            0,  // first pause
+            VibrationEffect.DEFAULT_AMPLITUDE,  // second short whistle
+            0,  // second pause
+            VibrationEffect.DEFAULT_AMPLITUDE   // final long whistle
+        )
+        val effect = VibrationEffect.createWaveform(timings, amplitudes, -1)
+        vibrator.vibrate(effect)
+    }
+
     fun onTaskSuccessFeedback() {
         val timings = longArrayOf(0, 200)
         val amplitudes = intArrayOf(
