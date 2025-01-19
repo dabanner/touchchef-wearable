@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
 
             if (message.type == "endGame" && ::navController.isInitialized) {
                 runOnUiThread {
-                    performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    feedbackManager.onEndGameFeedback()
                     val currentBackStack = navController.currentBackStackEntry
 
                     // Log the entire backstack arguments
