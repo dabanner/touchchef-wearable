@@ -335,6 +335,7 @@ class MainActivity : ComponentActivity() {
                             CircularTimerOverlay(
                                 seconds = seconds.timerDuration.toInt(),
                                 onTimerComplete = {
+                                    feedbackManager.onTimerDoneFeedback()
                                     webSocketClient.sendJson(mapOf(
                                         "type" to "timerFinish",
                                         "to" to "angular",
